@@ -476,7 +476,7 @@ const CAT=[
   {t:'keyboard',n:'Keyboard',w:.44,d:.14,kind:'top',c:0xeeeeea,b:g=>{B(g,.44,.018,.13,0xeeeeea,0,0,0);for(let r=0;r<4;r++)B(g,.4,.004,.022,0xdcdcd6,0,.018,-.045+r*.03)}},
   {t:'phone',n:'Phone',w:.08,d:.16,kind:'top',c:0x1d1d1d,tag:'podcasts',b:g=>{B(g,.075,.01,.155,0x1d1d1d,0,0,0);P(g,.066,.14,BM(TX.phone),0,.0105,0,-Math.PI/2)}},
   {t:'journal',n:'Journal',w:.2,d:.27,kind:'top',c:0x6a3b22,tag:'journal',b:g=>{B(g,.2,.03,.27,new THREE.MeshLambertMaterial({map:TX.journal}),0,0,0);B(g,.18,.026,.25,0xf3ecd8,.006,.002,0)}},
-  {t:'desklamp',n:'Desk lamp',w:.2,d:.2,kind:'top',c:0xd9d2c4,light:true,b:g=>{C(g,.08,.09,.02,0xd9d2c4,0,0,0);C(g,.008,.008,.35,0xd9d2c4,0,.02,0);const sh=C(g,.03,.1,.1,M(0xd9d2c4,{emissive:0x3a2a10}),0,.33,.05);sh.rotation.x=.5;const l=new THREE.PointLight(0xffd9a0,.6,2.5,2);l.position.set(0,.3,.08);g.add(l)}},
+  {t:'desklamp',n:'Desk lamp',w:.2,d:.2,kind:'top',c:0xd9d2c4,light:true,tag:'light',b:g=>{C(g,.08,.09,.02,0xd9d2c4,0,0,0);C(g,.008,.008,.35,0xd9d2c4,0,.02,0);const sh=C(g,.03,.1,.1,M(0xd9d2c4,{emissive:0x3a2a10}),0,.33,.05);sh.rotation.x=.5;const l=new THREE.PointLight(0xffd9a0,.6,2.5,2);l.position.set(0,.3,.08);g.add(l)}},
   {t:'mug',n:'Mug',w:.09,d:.09,kind:'top',c:0xe07a4f,b:g=>{C(g,.04,.04,.09,0xe07a4f,0,0,0)}},
   {t:'bookshelf',n:'Bookshelf',w:.8,d:.3,kind:'floor',c:0x6b4e36,b:g=>{B(g,.8,1.8,.3,W(0x6b4e36),0,0,0);const col=[0xb8332b,0x2b5fa8,0xd9b45a,0x2f6b47,0x3a3a3a,0xe8e2d4];for(let r=0;r<4;r++)for(let i=0;i<6;i++)B(g,.1,.24+((i+r)%3)*.03,.24,col[(i+r*2)%6],-.3+i*.12,.1+r*.43,.04)}}
  ]},
@@ -503,7 +503,7 @@ const CAT=[
   {t:'coffeetable',n:'Coffee table',w:1.0,d:.55,kind:'floor',surface:.4,c:0x8a5a3a,b:g=>{B(g,1,.04,.55,W(0x8a5a3a),0,.36,0);[[-.45,-.22],[.45,-.22],[-.45,.22],[.45,.22]].forEach(([x,z])=>B(g,.04,.36,.04,W(0x6a4028),x,0,z))}},
   {t:'rug',n:'Rug',w:2.2,d:1.5,kind:'floor',flat:true,c:0xa8452f,b:g=>{const m=P(g,2.2,1.5,new THREE.MeshLambertMaterial({map:TX.rug}),0,.006,0,-Math.PI/2);m.receiveShadow=true}},
   {t:'plant',n:'Plant',w:.5,d:.5,kind:'floor',c:0x4d6b3a,b:g=>{C(g,.17,.13,.38,W(0x8a5a3a),0,0,0);[[0,.75,0,.3],[.12,1.0,.05,.2],[-.1,.95,-.06,.22]].forEach(([x,y,z,r])=>{const l=new THREE.Mesh(new THREE.IcosahedronGeometry(r,0),M(0x4d6b3a));l.position.set(x,y,z);l.castShadow=true;g.add(l)})}},
-  {t:'floorlamp',n:'Floor lamp',w:.4,d:.4,kind:'floor',c:0x2a2a2a,light:true,b:g=>{C(g,.15,.17,.03,0x2a2a2a,0,0,0);C(g,.015,.015,1.45,0x2a2a2a,0,.03,0);C(g,.16,.24,.3,M(0xfff1d0,{emissive:0x6a4a1a}),0,1.45,0);const l=new THREE.PointLight(0xffd9a0,.6,4,2);l.position.set(0,1.5,0);g.add(l)}},
+  {t:'floorlamp',n:'Floor lamp',w:.4,d:.4,kind:'floor',c:0x2a2a2a,light:true,tag:'light',b:g=>{C(g,.15,.17,.03,0x2a2a2a,0,0,0);C(g,.015,.015,1.45,0x2a2a2a,0,.03,0);C(g,.16,.24,.3,M(0xfff1d0,{emissive:0x6a4a1a}),0,1.45,0);const l=new THREE.PointLight(0xffd9a0,.6,4,2);l.position.set(0,1.5,0);g.add(l)}},
   {t:'bed',n:'Bed (small)',w:.95,d:1.95,kind:'floor',c:0xc9c3b6,b:g=>{B(g,.95,.22,1.95,W(0x9a8a74),0,0,0);B(g,.9,.16,1.9,0xefebe2,0,.22,0);B(g,.92,.08,1.2,0xc9c3b6,0,.38,.32);B(g,.55,.09,.32,0xf6f3ec,0,.4,-.72);B(g,.95,.6,.06,W(0x9a8a74),0,0,-.95)}},
   {t:'nightstand',n:'Nightstand',w:.45,d:.4,kind:'floor',surface:.5,c:0x8a6a4a,b:g=>{B(g,.45,.5,.4,W(0x8a6a4a),0,0,0);B(g,.38,.01,.01,W(0x5a3a24),0,.3,.2)}}
  ]},
@@ -807,7 +807,9 @@ new ResizeObserver(resize).observe(canvas);
 const ray=new THREE.Raycaster();const v2=new THREE.Vector2();const groundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
 function ndc(e){const r=canvas.getBoundingClientRect();v2.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(v2,cam)}
 function ground(e){ndc(e);const p=new THREE.Vector3();return ray.ray.intersectPlane(groundPlane,p)?p:null}
-function hitItem(e){ndc(e);const h=ray.intersectObjects(itemGroup.children,true);return h.length?state.items.find(i=>i.id===h[0].object.userData.itemId):null}
+// see-through glow (sprites, additive light planes) never blocks a click on the object behind it
+const seeThrough=o=>o.isSprite||(o.material&&(o.material.blending===THREE.AdditiveBlending||(o.material.transparent&&o.material.depthWrite===false)));
+function hitItem(e){ndc(e);const h=ray.intersectObjects(itemGroup.children,true).find(x=>!seeThrough(x.object));return h?state.items.find(i=>i.id===h.object.userData.itemId):null}function hitWallObj(e){ndc(e);const h=ray.intersectObjects(wallGroup.children,true);return h.length?wallById(h[0].object.userData.wallId):null}
 function hitWallObj(e){ndc(e);const h=ray.intersectObjects(wallGroup.children,true);return h.length?wallById(h[0].object.userData.wallId):null}
 const snap=(v,s)=>Math.round(v/s)*s;
 let drag=null;
@@ -862,7 +864,12 @@ function walkClick(e){ndc(e);const hits=ray.intersectObjects([...itemGroup.child
 function act(it){const n=nodes[it.id];if(!n)return false;
   if(it.tag==='blinds'){const b=n.userData.blind;b.target=b.target>.3?.08:.85;toast(b.target>.3?'Blinds down':'Blinds up');return true}
   if(it.tag==='fan'){const f=n.userData.fan;f.on=!f.on;toast(f.on?'Fan on':'Fan off');return true}
-  if(it.tag==='light'){let on;n.traverse(o=>{if(o.isPointLight){o.visible=!o.visible;on=o.visible}if(o.userData.lamp)o.material.color.set(o.material.color.getHex()===0xfffbf0?0x777777:0xfffbf0)});toast(on?'Light on':'Light off');return true}
+  if(it.tag==='light'){ // lamps and ceiling lights: light off, bulb and glowing shade go dark; click again to turn back on
+    const on=!!n.userData.off;n.userData.off=!on;
+    n.traverse(o=>{if(o.isLight){o.visible=on;return}if(!o.isMesh||o.userData.isOutline||o.userData.isScreen||!o.material)return;const m=o.material;
+      if(m.isMeshBasicMaterial&&!m.map&&!m.transparent){if(o.userData.c0===undefined){o.material=m.clone();o.userData.c0=m.color.getHex()}o.material.color.setHex(on?o.userData.c0:0x4a4740)}
+      else if(m.emissive&&(o.userData.e0!==undefined||m.emissive.getHex())){if(o.userData.e0===undefined){o.material=m.clone();o.userData.e0=m.emissive.getHex()}o.material.emissive.setHex(on?o.userData.e0:0)}});
+    toast(on?'Light on':'Light off');return true}
   if(it.tag==='channels'){n.traverse(o=>{if(o.userData.isScreen&&!o.userData.on){o.userData.on=true;o.material=new THREE.MeshBasicMaterial({map:window.TVSTILL||TX.crt,toneMapped:false})}})}
   return false}
 function openCard(it){card.innerHTML=`<button class="x" aria-label="Close">×</button><div class="lab">${TYPES[it.t].n.toUpperCase()}</div><h3>${TAGS[it.tag]}</h3><p>${TAGTEXT[it.tag]}</p><p style="font-size:12px;color:var(--dim)">This is a placeholder. The real content goes here in the finished portfolio.</p>`;card.hidden=false;card.querySelector('.x').onclick=()=>card.hidden=true}
@@ -1116,8 +1123,10 @@ rebuildItems=(orig=>function(){orig();themeProps()})(rebuildItems);themeProps();
 // Only these five objects open something. Chairs still let you sit.
 const CLICK={monitor:'resume',laptop:'podcasts',journal:'journal',pokertable:'poker',flattv:'channels',phone:'cipher'};
 TAGS.cipher='CipherMesh';
-Object.values(TYPES).forEach(T=>{T.tag=CLICK[T.t]||''});
-state.items.forEach(i=>{i.tag=CLICK[i.t]||''});
+// only these open something; lamps and ceiling lights keep their on/off switch
+Object.values(TYPES).forEach(T=>{T.tag=CLICK[T.t]||(T.tag==='light'?'light':'')});
+state.items.forEach(i=>{i.tag=CLICK[i.t]||(i.tag==='light'?'light':'')});
+TAGS.light='Turn the light on or off';
 
 const PROJECTS=[
  {name:'Poker Solver and Trainer',sub:'Game theory, from scratch',stack:['C++17','CUDA','SQLite','JavaScript','Oracle Cloud'],
@@ -1523,7 +1532,7 @@ const WALLS={
   poker:[['neonsign',1.065,3.5],['rangechart',1.065,2.15],['chipshelf',1.065,1.05],['floorlamp',1.28,.45,0]],
   creator:[['floorlamp',1.32,.42,0]],
   lab:[['blueprint',1.065,2.15],['floatshelf',1.065,.95],['serverrack',1.3,1.6,Math.PI/2],['floorlamp',1.28,.45,0]]};
-(WALLS[WALLD]||[]).forEach(([t,x,z,ry])=>state.items.push({id:state.next++,t,x,z,ry:ry===undefined?Math.PI/2:ry,tag:''}));
+(WALLS[WALLD]||[]).forEach(([t,x,z,ry])=>state.items.push({id:state.next++,t,x,z,ry:ry===undefined?Math.PI/2:ry,tag:TYPES[t].tag||''}));
 if(typeof buildNav==='function'){rebuildItems();buildNav()}
 // ---- per-frame: outline hover, steam wisps, dust drift, hint visibility
 let plast=performance.now();
