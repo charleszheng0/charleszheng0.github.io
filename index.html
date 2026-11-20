@@ -285,7 +285,7 @@ table{color:inherit;font:inherit}
 </script>
 <div class="app">
   <header class="top">
-    <h1>Charles Zheng <span>Unit 4B · engineer and food creator</span></h1>
+    <h1>Charles Zheng <span>developer and creator</span></h1>
     <div class="seg" role="group" aria-label="Portfolio view" id="viewgrp">
       <button id="v-house" aria-pressed="true">First person</button>
       <button id="v-rec" aria-pressed="false">Classic</button>
@@ -629,7 +629,7 @@ let sel=null; // {type:'item'|'wall', id}
 let mode='plan', tool='select', placing=null;
 const history=[];
 function snapshot(){history.push(JSON.stringify(state));if(history.length>60)history.shift()}
-function save(){try{localStorage.setItem('unit4b-portfolio-unused',JSON.stringify(state))}catch(e){}}
+function save(){try{localStorage.setItem('cz-portfolio-unused',JSON.stringify(state))}catch(e){}}
 function commit(){save();refreshProps();refreshTip();if(window.__navReady&&mode==='walk')buildNav();if(window.__shReady)refreshHelpers()}
 
 // ---------------- walls ----------------
@@ -767,9 +767,9 @@ function bounds(){let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;state.walls.forEach(w=>{x0=M
 
 // walk
 let yaw=0,pitch=0,keys={},walkTo=null,moveMode='keys';
-try{moveMode=localStorage.getItem('unit4b-move')||'keys'}catch(e){}
+try{moveMode=localStorage.getItem('cz-move')||'keys'}catch(e){}
 const target=new THREE.Mesh(new THREE.RingGeometry(.18,.25,32),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.8,depthWrite:false}));target.rotation.x=-Math.PI/2;target.visible=false;scene.add(target);
-function setMove(m){moveMode=m;$('mv-keys').setAttribute('aria-pressed',m==='keys');$('mv-click').setAttribute('aria-pressed',m==='click');walkTo=null;target.visible=false;try{localStorage.setItem('unit4b-move',m)}catch(e){}refreshTip()}
+function setMove(m){moveMode=m;$('mv-keys').setAttribute('aria-pressed',m==='keys');$('mv-click').setAttribute('aria-pressed',m==='click');walkTo=null;target.visible=false;try{localStorage.setItem('cz-move',m)}catch(e){}refreshTip()}
 $('mv-keys').onclick=()=>setMove('keys');$('mv-click').onclick=()=>setMove('click');setMove(moveMode);
 function spawn(){const b=bounds();const f=state.walls.find(w=>w.kind==='front');let x=b.cx,z=b.cz;
   if(f){const mx=(f.x1+f.x2)/2,mz=(f.z1+f.z2)/2,dx=f.x2-f.x1,dz=f.z2-f.z1,L=Math.hypot(dx,dz);let nx=-dz/L,nz=dx/L;if((b.cx-mx)*nx+(b.cz-mz)*nz<0){nx=-nx;nz=-nz}x=mx+nx*.7;z=mz+nz*.7}
@@ -989,9 +989,9 @@ function walkStep(dt,now){if(phys.bx===null)syncBody();if(!NAV.grid)buildNav();
 
 setMode('walk');
 (function(){const set=v=>{const r=v==='rec';document.body.classList.toggle('recmode',r);$('recruiter').hidden=!r;$('recbar').hidden=!r;
-  ['v-house','r-house'].forEach(id=>$(id).setAttribute('aria-pressed',!r));['v-rec','r-rec'].forEach(id=>$(id).setAttribute('aria-pressed',r));try{localStorage.setItem('unit4b-view',v)}catch(e){}if(r)scrollTo(0,0);else setTimeout(resize,30)};
+  ['v-house','r-house'].forEach(id=>$(id).setAttribute('aria-pressed',!r));['v-rec','r-rec'].forEach(id=>$(id).setAttribute('aria-pressed',r));try{localStorage.setItem('cz-view',v)}catch(e){}if(r)scrollTo(0,0);else setTimeout(resize,30)};
   $('v-house').onclick=$('r-house').onclick=()=>set('house');$('v-rec').onclick=$('r-rec').onclick=()=>set('rec');
-  let v='house';try{v=localStorage.getItem('unit4b-view')||'house'}catch(e){}if(new URLSearchParams(location.search).get('rec'))v='rec';set(v)})();
+  let v='house';try{v=localStorage.getItem('cz-view')||'house'}catch(e){}if(new URLSearchParams(location.search).get('rec'))v='rec';set(v)})();
 // optional URL settings for screenshots: ?style=5&view=walk&cam=x,z,yaw,pitch&clean=1
 try{const q=new URLSearchParams(location.search);
   if(q.get('fresh')){state=starter();load(true)}
@@ -1014,7 +1014,7 @@ function refreshHelpers(){while(lightHelpers.children.length)lightHelpers.remove
   const dm=new THREE.LineDashedMaterial({color:0x111111,dashSize:.08,gapSize:.06});
   itemGroup.updateMatrixWorld(true);itemGroup.traverse(o=>{if(!o.isPointLight)return;const p=new THREE.Vector3();o.getWorldPosition(p);const g=new THREE.BufferGeometry().setFromPoints([p,new THREE.Vector3(p.x,0,p.z)]);const l=new THREE.Line(g,dm);l.computeLineDistances();lightHelpers.add(l);
     const c=new THREE.Mesh(new THREE.RingGeometry(.07,.085,24),new THREE.MeshBasicMaterial({color:0x111111,side:THREE.DoubleSide}));c.position.copy(p);c.lookAt(p.x,p.y-1,p.z);lightHelpers.add(c)})}
-function setShading(m){shading=m;['wire','solid','render'].forEach(k=>$('sh-'+k).setAttribute('aria-pressed',k===m));try{localStorage.setItem('unit4b-shading',m)}catch(e){}
+function setShading(m){shading=m;['wire','solid','render'].forEach(k=>$('sh-'+k).setAttribute('aria-pressed',k===m));try{localStorage.setItem('cz-shading',m)}catch(e){}
   const s=STYLES[state.style];canvas.style.filter=m==='render'?(s.css||'none'):'none';$('vig').style.opacity=m==='render'?(s.vig||0):0;
   grid.material.opacity=m==='render'?.12:.28;refreshHelpers();showSel()}
 window.__shReady=true;setShading(window.__urlShading||shading);
