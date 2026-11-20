@@ -170,7 +170,7 @@ kbd{font:500 11px var(--f-mono);border:1px solid #4a4a50;border-bottom-width:2px
 
 /* click hint */
 .wx{position:absolute;right:12px;top:12px;z-index:6;background:#121214;color:#e8e6e1;border:1px solid #2c2c30;padding:5px 10px;border-radius:4px;font-family:var(--f-mono);font-size:12px;display:flex;gap:10px;align-items:center;cursor:default;font-variant-numeric:tabular-nums}.wx .m{color:#8f8b84}
-.exitz{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:40;background:#121214;color:#e8e6e1;border:1.5px solid #ff9a3c;border-radius:6px;padding:11px 22px;font-family:var(--f-mono);font-size:16px;font-weight:500;display:flex;gap:12px;align-items:center;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.35)}.exitz:hover{background:#1e1e22}.exitz .a{color:#ff9a3c}.exitz .k{font-size:11px;color:#8f8b84;border:1px solid #3a3a40;border-radius:3px;padding:1px 6px}
+.exitz{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:40;background:#121214;color:#e8e6e1;border:1.5px solid #ff9a3c;border-radius:6px;padding:11px 22px;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:500;display:flex;gap:12px;align-items:center;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.35)}.exitz:hover{background:#1e1e22}.exitz .a{color:#ff9a3c}.exitz .k{font-family:var(--f-mono);font-size:11px;color:#8f8b84;border:1px solid #3a3a40;border-radius:3px;padding:1px 6px}
 .hint{position:absolute;left:50%;bottom:62px;transform:translateX(-50%);z-index:6;background:#121214;color:#e8e6e1;border:1px solid #2c2c30;padding:7px 13px 7px 11px;border-radius:4px;font-family:var(--f-mono);font-size:13px;display:flex;gap:9px;align-items:center;pointer-events:none;white-space:nowrap;max-width:calc(100% - 32px);transition:opacity .4s}
 .hint i{flex:none;font-style:normal;color:#ff9a3c;animation:hp 1.6s ease-in-out infinite}.hint .m{color:#8f8b84}
 @keyframes hp{0%,100%{opacity:1}50%{opacity:.35}}
@@ -806,7 +806,7 @@ function delSel(){if(!sel)return;snapshot();if(sel.type==='item'){const id=sel.i
 
 // ---------------- tip / toast ----------------
 function refreshTip(){const t={plan:{select:'Click an object to select it, drag to move it. Drag empty floor to pan, scroll to zoom.',wall:'Drag along the grid to draw a wall. Walls snap to 0.5 m.',door:'Drag over a wall to cut a door opening.',window:'Drag over a wall to add a window.',front:'Drag over a wall to add the front door. Visitors start here.',erase:'Click an object or a wall to delete it.',place:`Click the floor to place: ${placing?TYPES[placing].n:''}. R turns it. Hold Shift to place more.`}[tool],
-  orbit:'Drag to orbit, right-drag to pan, scroll to zoom. Click an object to select it.',walk:moveMode==='keys'?'WASD mode: W A S D to walk, Shift to jog, move the mouse to look. Click a chair to sit, or an object to open it.':'Click mode: click the floor to walk there (you go around furniture), move the mouse to look. Click a chair to sit.'}[mode];$('tip').textContent=t||''}
+  orbit:'Drag to orbit, right-drag to pan, scroll to zoom. Click an object to select it.',walk:moveMode==='keys'?'W A S D to walk, Shift to jog, drag to look. Click a chair to sit, or an object to open it.':'Click mode: click the floor to walk there (you go around furniture), move the mouse to look. Click a chair to sit.'}[mode];$('tip').textContent=t||''}
 let toastT=null;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),1800)}
 
 // ---------------- modes ----------------
@@ -871,12 +871,12 @@ canvas.addEventListener('pointerdown',e=>{
 });
 function nearWall(p){let best=null;for(const w of state.walls){const r=segDist(p.x,p.z,w);if(r.d<.18&&(!best||r.d<best.d))best={d:r.d,w}}return best&&best.w}
 canvas.addEventListener('pointermove',e=>{
-  if(mode==='walk'&&!drag){const it=hitItem(e);const hv=$('hover');if(it&&(it.tag||SEATS[it.t])){const r=canvas.getBoundingClientRect();hv.textContent=SEATS[it.t]?'Sit down':TAGS[it.tag];hv.style.left=(e.clientX-r.left+14)+'px';hv.style.top=(e.clientY-r.top+14)+'px';hv.hidden=false;canvas.style.cursor='pointer'}else{hv.hidden=true;canvas.style.cursor='default'}}
+  if(mode==='walk'&&!drag){const it=hitItem(e);const hv=$('hover');if(it&&(it.tag||SEATS[it.t])){const r=canvas.getBoundingClientRect();hv.textContent=SEATS[it.t]?'Sit down':TAGS[it.tag];hv.style.left=(e.clientX-r.left+14)+'px';hv.style.top=(e.clientY-r.top+14)+'px';hv.hidden=false;canvas.style.cursor='pointer'}else{hv.hidden=true;canvas.style.cursor='grab'}}
   const p=mode!=='walk'?ground(e):null;if(p)$('coords').textContent=`x ${p.x.toFixed(2)} · z ${p.z.toFixed(2)}`;
   if(mode==='plan'&&ghost&&p&&!drag){const T=TYPES[placing];let x=snap(p.x,.05),z=snap(p.z,.05),ry=ghostRy,y=0;
     if(T.kind==='wall'){const ws=wallSnap(p.x,p.z);if(ws){x=ws.x;z=ws.z;ry=ws.ry}y=T.y||1.5}else if(T.kind==='top')y=surfaceAt(x,z);else if(T.kind==='ceil')y=H;ghost.position.set(x,y,z);ghost.rotation.y=ry}
   if(!drag)return;
-  if(drag.walk){const dx=e.clientX-drag.lx,dy=e.clientY-drag.ly;drag.lx=e.clientX;drag.ly=e.clientY;if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>5)drag.moved=true;if(drag.moved&&e.pointerType!=='mouse'){const k=e.pointerType==='touch'?.006:.004;yaw+=dx*k;pitch=Math.max(-1.3,Math.min(1.2,pitch+dy*k));persp.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'))}return}
+  if(drag.walk){const dx=e.clientX-drag.lx,dy=e.clientY-drag.ly;drag.lx=e.clientX;drag.ly=e.clientY;if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>5)drag.moved=true;if(drag.moved&&lookOK()){canvas.style.cursor='grabbing';$('hover').hidden=true;const k=e.pointerType==='touch'?.006:.0042;yaw+=dx*k;pitch=Math.max(-1.3,Math.min(1.2,pitch+dy*k));persp.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'))}return}
   if(drag.pan){plan.cx=drag.cx-(e.clientX-drag.x)/plan.zoom;plan.cz=drag.cz-(e.clientY-drag.y)/plan.zoom;updateOrtho();return}
   if(drag.wall&&p){let x2=snap(p.x,.5),z2=snap(p.z,.5);if(Math.abs(x2-drag.x1)>Math.abs(z2-drag.z1)*2.5)z2=drag.z1;else if(Math.abs(z2-drag.z1)>Math.abs(x2-drag.x1)*2.5)x2=drag.x1;drag.x2=x2;drag.z2=z2;
     preview.geometry.setFromPoints([new THREE.Vector3(drag.x1,.05,drag.z1),new THREE.Vector3(x2,.05,z2)]);const L=Math.hypot(x2-drag.x1,z2-drag.z1)||.01;previewBox.scale.set(L,1,1);previewBox.position.set((drag.x1+x2)/2,H/2,(drag.z1+z2)/2);previewBox.rotation.y=-Math.atan2(z2-drag.z1,x2-drag.x1);return}
@@ -886,7 +886,7 @@ canvas.addEventListener('pointermove',e=>{
 });
 addEventListener('pointerup',e=>{const d=drag;drag=null;if(!d)return;
   if(d.orbitClick){if(Math.abs(e.clientX-d.x)+Math.abs(e.clientY-d.y)<5&&e.target===canvas){const it=hitItem(e);sel=it?{type:'item',id:it.id}:null;if(!it){const w=hitWallObj(e);if(w)sel={type:'wall',id:w.id}}showSel();refreshProps()}return}
-  if(d.walk){if(!d.moved&&e.target===canvas)walkClick(e);return}
+  if(d.walk){if(d.moved)canvas.style.cursor='grab';if(!d.moved&&e.target===canvas)walkClick(e);return}
   if(d.wall){preview.visible=false;previewBox.visible=false;const L=Math.hypot(d.x2-d.x1,d.z2-d.z1);if(L<.5){toast('Drag a little longer: at least 0.5 m');return}
     snapshot();const w={id:state.next++,kind:tool,x1:d.x1,z1:d.z1,x2:d.x2,z2:d.z2};if(tool!=='wall')carve(w);if(tool==='front')state.walls.forEach(x=>{if(x.kind==='front')x.kind='door'});state.walls.push(w);buildWalls();sel={type:'wall',id:w.id};showSel();commit();return}
   if(d.item&&d.moved)commit();
@@ -897,8 +897,8 @@ canvas.addEventListener('wheel',e=>{if(mode!=='plan')return;e.preventDefault();c
 const card=$('card');
 function walkClick(e){ndc(e);const hits=ray.intersectObjects([...itemGroup.children,...wallGroup.children,floor],true);if(!hits.length)return;const h=hits[0];
   const id=h.object.userData.itemId;if(id){const it=state.items.find(i=>i.id===id);if(it&&SEATS[it.t]){sitOn(it);return}if(it&&it.tag){if(act(it))return;openCard(it);return}}
-  if(h.object===floor||h.point.y<.05){
-    const tx=h.point.x,tz=h.point.z;const go=()=>{if(!pathTo(tx,tz,null,true))toast("Can't get there")};if(phys.seated)standUp(go);else go()}}
+  }  // no click-to-walk: W A S D moves, drag turns the view
+
 function act(it){const n=nodes[it.id];if(!n)return false;
   if(it.tag==='blinds'){const b=n.userData.blind;b.target=b.target>.3?.08:.85;toast(b.target>.3?'Blinds down':'Blinds up');return true}
   if(it.tag==='fan'){const f=n.userData.fan;f.on=!f.on;toast(f.on?'Fan on':'Fan off');return true}
@@ -940,10 +940,10 @@ function starter(){const s={v:1,style:17,walls:[],items:[],next:1};const W=(x1,z
   W(1.0,0,2.5,0);W(2.5,0,4,0,'window');W(4,0,6.5,0);W(1.0,0,1.0,5);W(6.5,0,6.5,5);W(1.0,5,2.75,5);W(2.75,5,3.75,5,'front');W(3.75,5,6.5,5);
   const I=(t,x,z,ry=0,ex={})=>s.items.push(Object.assign({id:s.next++,t,x,z,ry,tag:TYPES[t].tag||''},ex));
   I('snakeplant',1.3,4.62);I('pokertable',1.6,3.5,Math.PI/2);I('blackstool',2.12,3.15,-Math.PI/2);I('blackstool',2.12,3.85,-Math.PI/2);
-  I('desk',2.75,.5);I('officechair',2.75,1.22,Math.PI);I('monitor',2.75,.3);I('laptop',1.98,.5,.3);I('keyboard',2.75,.7);I('journal',3.5,.5,.15);I('phone',3.48,.8,-.3);I('desklamp',3.6,.15,-Math.PI/2);
-  I('sofa',4.1,1.6,Math.PI/2);I('coffeetable',4.85,1.6,Math.PI/2);I('succulent',4.85,1.5);I('tvconsole',6.19,1.4,-Math.PI/2);I('flattv',6.395,1.4,-Math.PI/2);I('clock',5.2,.105);I('leafplant',6.1,.42);I('blinds',3.25,.065);I('curtain',2.32,.065);I('curtain',4.18,.065);I('ceilfan',4.7,1.6);
+  I('desk',2.6,.5);I('officechair',2.6,1.22,Math.PI);I('monitor',2.6,.3);I('laptop',1.83,.5,.3);I('keyboard',2.6,.7);I('journal',3.35,.5,.15);I('phone',3.33,.8,-.3);I('desklamp',3.45,.15,-Math.PI/2);
+  I('sofa',4.1,1.6,Math.PI/2);I('coffeetable',4.85,1.6,Math.PI/2);I('succulent',4.85,1.5);I('tvconsole',6.19,1.28,-Math.PI/2);I('flattv',6.395,1.28,-Math.PI/2);I('clock',5.2,.105);I('leafplant',6.1,.42);I('blinds',3.25,.065);I('curtain',2.32,.065);I('curtain',4.18,.065);I('ceilfan',4.7,1.6);
   // kitchen: spices like the reference photo, one small light on a tripod
-  I('fridge',6.08,4.55,-Math.PI/2);I('pans',6.1,4.55,-Math.PI/2);I('stove',6.1,3.78,-Math.PI/2);I('pot',5.95,3.97);I('sink',6.14,2.75,-Math.PI/2);I('spices',6.02,2.3,-Math.PI/2);I('toaster',6.33,2.32,-Math.PI/2);I('backsplash',6.435,3.2,-Math.PI/2);I('knifebar',6.435,2.35,-Math.PI/2);I('uppercab',6.435,2.6,-Math.PI/2);I('uppercabopen',6.435,3.5,-Math.PI/2);
+  I('fridge',6.08,4.55,-Math.PI/2);I('pans',6.1,4.55,-Math.PI/2);I('stove',6.1,3.78,-Math.PI/2);I('pot',5.95,3.97);I('sink',6.14,2.75,-Math.PI/2);I('spices',6.3,2.57,-Math.PI/2);I('toaster',6.33,2.32,-Math.PI/2);I('backsplash',6.435,3.2,-Math.PI/2);I('knifebar',6.435,2.35,-Math.PI/2);I('uppercab',6.435,2.6,-Math.PI/2);I('uppercabopen',6.435,3.5,-Math.PI/2);
   I('peninsula',4.6,3.95);I('board',4.72,4.0,.08);I('dji',5.1,3.78,-.6);I('led',5.24,4.1,-.9);I('barstool',4.3,3.42);I('barstool',4.9,3.42);I('pendant',4.3,3.95);I('pendant',4.95,3.95);
   I('downlight',2.6,1.5);
   return s}
@@ -1037,7 +1037,7 @@ function seatSpots(it){const f=seatFront(it),sx=f.z,sz=-f.x,T=TYPES[it.t],fo=Mat
 function sitOn(it){const S=SEATS[it.t];if(phys.seated===it.id)return;if(phys.seated){standUp(()=>sitOn(it));return}
   const f=seatFront(it),cands=seatSpots(it).filter(p=>free(p.x,p.z));
   if(!cands.length){toast('That seat is blocked');return}cands.sort((a,b)=>Math.hypot(a.x-phys.bx,a.z-phys.bz)-Math.hypot(b.x-phys.bx,b.z-phys.bz));
-  const swoop=()=>animTo({x:it.x+f.x*.06,z:it.z+f.z*.06,y:S.eye,yaw:Math.atan2(-f.x,-f.z),pitch:S.pitch,arc:.06},1.15,()=>{phys.seated=it.id;phys.eyeY=S.eye;toast('Sitting. Press W or click the floor to stand up')});
+  const swoop=()=>animTo({x:it.x+f.x*.06,z:it.z+f.z*.06,y:S.eye,yaw:Math.atan2(-f.x,-f.z),pitch:S.pitch,arc:.06},1.15,()=>{phys.seated=it.id;phys.eyeY=S.eye;toast('Sitting. Press W to stand up')});
   const st=cands[0];if(Math.hypot(st.x-phys.bx,st.z-phys.bz)<.3)swoop();else if(!pathTo(st.x,st.z,swoop,false))toast("Can't reach that seat")}
 function standUp(cb){const it=state.items.find(i=>i.id===phys.seated);phys.seated=null;if(!it){phys.eyeY=EYE;cb&&cb();return}
   let p=seatSpots(it).find(q=>free(q.x,q.z))||nearestFree(it.x,it.z);
@@ -1500,15 +1500,44 @@ const goRoom=()=>$('v-house').click(),goClassic=()=>{exitZoom();$('v-rec').click
 const busy=()=>!!zoomBack||!mon.hidden||!card.hidden;
 // ---- look by moving the mouse (no drag): small moves turn the view a little, so objects stay easy to click;
 //      near the left or right edge the view keeps turning. Off the canvas (menus, Recruiter button) nothing moves.
+const PL={on:false,fail:true,eat:false};  // pointer lock is off: drag to look // pointer lock state (see "game-style look" below)
 const LOOK={x:null,y:null,nx:0,inside:false},lookOK=()=>mode==='walk'&&!busy()&&!phys.anim&&!isClassic();
-canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const r=canvas.getBoundingClientRect(),nx=(e.clientX-r.left)/r.width*2-1,ny=(e.clientY-r.top)/r.height*2-1;
+canvas.addEventListener('pointermove',e=>{if(true)return;const r=canvas.getBoundingClientRect(),nx=(e.clientX-r.left)/r.width*2-1,ny=(e.clientY-r.top)/r.height*2-1;
   if(lookOK()&&LOOK.x!==null){yaw-=(nx-LOOK.x)*.38;pitch=Math.max(-1,Math.min(.6,pitch-(ny-LOOK.y)*.24))}LOOK.x=nx;LOOK.y=ny;LOOK.nx=nx;LOOK.inside=true});
 canvas.addEventListener('pointerleave',()=>{LOOK.inside=false;LOOK.x=null});
 let lookT=performance.now();(function edgeTurn(now){const dt=Math.min(.05,(now-lookT)/1000);lookT=now;const a=Math.abs(LOOK.nx);
-  if(LOOK.inside&&a>.72&&lookOK())yaw-=Math.sign(LOOK.nx)*Math.min(1,(a-.72)/.24)*1.5*dt;requestAnimationFrame(edgeTurn)})(lookT);
+  if(false)yaw-=Math.sign(LOOK.nx)*Math.min(1,(a-.72)/.24)*1.5*dt;requestAnimationFrame(edgeTurn)})(lookT);
 // contextual prompt: how to move, shown at the start, gone after the first step
-const prompt=document.createElement('div');prompt.className='kp';prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or click the floor to walk <span>·</span> move the mouse to look';
+const prompt=document.createElement('div');prompt.className='kp';prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to walk, drag to look';
 document.querySelector('.view').appendChild(prompt);const hidePrompt=()=>{}; // the tip stays as a faint reminder (top left) for recruiters
+// ---- game-style look: click the room once and the cursor locks to the centre crosshair; moving the mouse turns the view.
+//      Esc frees the cursor. Panels, zoom views and the Recruiter page free it too. If the browser has no pointer lock,
+//      the old look (move the mouse, edge of screen turns) is used instead.
+const XH=document.createElement('div');XH.className='xh';XH.hidden=true;document.querySelector('.view').appendChild(XH);
+const tipLook=()=>{const w='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to walk, ';
+  prompt.innerHTML=w+'drag to look'};tipLook();
+document.addEventListener('pointerlockchange',()=>{PL.on=document.pointerLockElement===canvas;XH.hidden=!PL.on;if(!PL.on)$('hover').hidden=true;tipLook()});
+document.addEventListener('pointerlockerror',()=>{PL.fail=true;PL.on=false;XH.hidden=true;tipLook()});
+// while locked, every pointer event reads as the centre of the canvas: clicks, hover labels and hit tests all use the crosshair
+const plCentre=e=>{if(!PL.on)return;const r=canvas.getBoundingClientRect();Object.defineProperty(e,'clientX',{value:r.left+r.width/2});Object.defineProperty(e,'clientY',{value:r.top+r.height/2})};
+['pointermove','pointerdown','pointerup','click','contextmenu'].forEach(t=>addEventListener(t,plCentre,true));
+// the first click only locks the cursor; it does not also walk or open something
+addEventListener('pointerdown',e=>{if(e.target!==canvas||PL.on||PL.fail||e.pointerType!=='mouse'||e.button!==0||!lookOK())return;e.stopImmediatePropagation();PL.eat=true;
+  try{const p=canvas.requestPointerLock();if(p&&p.catch)p.catch(()=>{PL.fail=true;tipLook()})}catch(_){PL.fail=true;tipLook()}},true);
+addEventListener('pointerup',e=>{if(PL.eat){PL.eat=false;e.stopImmediatePropagation()}},true);
+canvas.addEventListener('pointermove',e=>{if(!PL.on||!lookOK())return;yaw-=e.movementX*.0024;pitch=Math.max(-1,Math.min(.6,pitch-e.movementY*.0024))});
+(function plWatch(){if(PL.on&&(mode!=='walk'||busy()||isClassic()))document.exitPointerLock();XH.classList.toggle('on',PL.on&&!$('hover').hidden);requestAnimationFrame(plWatch)})();
+// one type style for every line on the room: same as the controls tip (Hanken Grotesk, cream, soft shadow, keys in Plex Mono)
+{const st=document.createElement('style');st.textContent=`
+.xh{position:absolute;left:50%;top:50%;width:16px;height:16px;transform:translate(-50%,-50%);pointer-events:none;z-index:7}
+.xh::before,.xh::after{content:'';position:absolute;background:#fff6e8;box-shadow:0 0 0 1px rgba(0,0,0,.45);border-radius:1px}
+.xh::before{left:7px;top:0;width:2px;height:16px}.xh::after{left:0;top:7px;width:16px;height:2px}.xh.on::before,.xh.on::after{background:${ACC}}
+.view .hover{font:500 15px "Hanken Grotesk",sans-serif;color:#fff6e8;background:none;border:0;padding:0;box-shadow:none;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 14px rgba(0,0,0,.6)}
+body:not([class*="lab-diegetic"]) .view .toast{top:64px}.view .toast{font:500 14px "Hanken Grotesk",sans-serif;color:#fff6e8;background:rgba(21,17,13,.72);border:0;border-radius:999px;padding:5px 12px;box-shadow:none;backdrop-filter:blur(6px)}
+body.holding .hint{opacity:0!important}
+.snd{font:500 14px "Hanken Grotesk",sans-serif;color:rgba(255,246,232,.9);background:none;border:0;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 14px rgba(0,0,0,.6)}.snd:hover{border:0;color:#fff}
+.snd .k,.playhud kbd{font:500 11px "IBM Plex Mono",monospace;border:1px solid rgba(239,228,212,.45);border-radius:3px;padding:0 4px;background:none;color:#efe4d4;text-transform:uppercase;text-shadow:none}
+.snd[aria-pressed=false] .on{color:rgba(255,246,232,.5)}`;document.head.appendChild(st)}
 const ui=document.createElement('div');ui.className='ms ms-'+UI;document.body.appendChild(ui);window.__ms=ui;
 // all three: always on screen, no border, one click to switch between walking the room and the Classic page
 const switchMode=m=>{if(m==='classic')goClassic();else goRoom()};
@@ -1650,14 +1679,14 @@ if(LAB){document.body.classList.add('lab-'+LAB);
   body .view .kp kbd{font-size:10px}
   `;document.head.appendChild(st);
   const view=document.querySelector('.view'),ht=$('hinttxt');
-  if(LAB==='quiet'){ht.textContent='Start with the monitor on the desk';prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or click the floor to walk, move the mouse to look';
+  if(LAB==='quiet'){ht.textContent='Start with the monitor on the desk';tipLook();
     const c=document.createElement('div');c.className='lb clk';view.appendChild(c);
     const up=()=>{const d=now();c.innerHTML=`<b>${d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}).toLowerCase()}</b>${WXW[ENV.wx]||''}`};up();setInterval(up,1000)}
   if(LAB==='viewfinder'){ht.textContent='The monitor on the desk has my resume and contact info';prompt.innerHTML='<kbd>WASD</kbd> walk <span>/</span> drag look';
     const f=document.createElement('div');f.className='vf';f.innerHTML='<i></i><i></i><i></i><i></i>';view.appendChild(f);
     const c=document.createElement('div');c.className='lb clk';view.appendChild(c);
     const up=()=>{const d=now(),p=n=>String(n).padStart(2,'0'),fr=Math.floor((performance.now()/1000%1)*24);c.innerHTML=`<em>●</em>${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}:${p(fr)} &nbsp;${WXW[ENV.wx]||''}`};up();setInterval(up,1000/24)}
-  if(LAB==='diegetic')prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or click the floor to walk, move the mouse to look';
+  if(LAB==='diegetic')tipLook();
   // the floating marker over the monitor
   const [cone,shaft,spr]=ARROW.children;
   if(LAB==='quiet'){cone.visible=shaft.visible=false;
@@ -1722,6 +1751,8 @@ function sliceMats(lvl){const c=new THREE.Color(0xffffff).lerp(new THREE.Color(0
 
 // ---------- food you can carry ----------
 const SH=[.428,.728,.988];   // fridge shelf tops (fridge space)
+const FS=[];for(let sh=0;sh<3;sh++)for(const x of[-.225,-.075,.075,.225])FS.push({sh,x,z:-.06});  // fridge spaces: any food in any free one
+const LONG={bread:1,banana:1};  // long food lies front to back so it fits one space
 function fruit(kind){const g=new THREE.Group();let m;
   if(kind==='apple'){m=new THREE.Mesh(new THREE.SphereGeometry(.036,22,16),std(0xa8242b,.42));m.scale.set(1,.9,1);m.position.y=.032;g.add(m);
     const st=new THREE.Mesh(new THREE.CylinderGeometry(.0018,.0022,.02,6),std(0x4a3020,.8));st.position.set(.002,.068,0);st.rotation.z=.25;g.add(st);
@@ -1761,12 +1792,18 @@ let held=null;
 function buildPicks(){for(const p of PICK){if(p.obj)KG.remove(p.obj);const o=p.make(p);keep(o);o.traverse(x=>{x.userData.k='pick:'+p.id});o.matrixAutoUpdate=false;p.obj=o;KG.add(o)}}
 const _m=new THREE.Matrix4(),_q=new Q4(),_e=new THREE.Euler(),_p=new V3(),_s=new V3(1,1,1),ONE=new V3(1,1,1);
 function locMatrix(p,loc,out){
-  if(loc==='hand'){_p.set(.15,-.16,-.4).applyQuaternion(persp.quaternion).add(persp.position);_q.copy(persp.quaternion).multiply(new Q4().setFromEuler(_e.set(.45,.5,0)));return out.compose(_p,_q,ONE)}
+  if(loc==='hand'){_p.set(.15,-.125,-.4).applyQuaternion(persp.quaternion).add(persp.position);_q.copy(persp.quaternion).multiply(new Q4().setFromEuler(_e.set(.45,.5,0)));return out.compose(_p,_q,ONE)}
   if(loc==='home'){const h=p.home;if(h[0]==='world')return out.compose(_p.set(h[1],h[2],h[3]),_q.setFromEuler(_e.set(0,h[4],0)),ONE);
     const n=anchor(h[0]);if(!n)return null;return out.compose(_p.set(h[1],h[2],h[3]),_q.setFromEuler(_e.set(0,h[4]||0,0)),ONE).premultiply(n.matrixWorld)}
-  if(loc==='fridge'){const n=anchor('fridge');if(!n)return null;const s=p.slot;return out.compose(_p.set(s[0],SH[p.shelf]+.001,s[1]),_q.setFromEuler(_e.set(0,s[2]||0,0)),ONE).premultiply(n.matrixWorld)}
+  if(loc==='fridge'){const n=anchor('fridge');if(!n)return null;if(p.fs==null)p.fs=freeSlot(p,null);const f=FS[p.fs]||FS[0];return out.compose(_p.set(f.x,SH[f.sh]+.001,f.z),_q.setFromEuler(_e.set(0,LONG[p.root||p.id]?Math.PI/2:(p.slot[2]||0),0)),ONE).premultiply(n.matrixWorld)}
   if(loc==='toaster'){const n=anchor('toaster');if(!n)return null;return out.compose(_p.set(0,.17,0),_q.setFromEuler(_e.set(0,0,0)),ONE).premultiply(n.matrixWorld)}
   return null}
+// the free space nearest a point in fridge space (from a click), or nearest the food's old spot
+function freeSlot(p,pt){const used=new Set(PICK.filter(q=>q!==p&&q.loc==='fridge'&&q.fs!=null).map(q=>q.fs));let best=-1,bd=1e9;
+  const tx=pt?pt.x:p.slot[0],ty=pt?pt.y:SH[p.shelf]+.1;
+  FS.forEach((f,i)=>{if(used.has(i))return;const d=(f.x-tx)**2+((SH[f.sh]+.1-ty)*1.4)**2;if(d<bd){bd=d;best=i}});return best}
+function slotAt(h){const n=anchor('fridge');if(!h||!n)return null;const q=n.worldToLocal(h.point.clone());return q}
+let fHit=null;  // where the last click or hover met the fridge
 function sendTo(p,loc,dur=.5){const m=new THREE.Matrix4();if(p.fly||!locMatrix(p,p.loc,m))m.copy(p.obj.matrix);
   const a=new V3(),b=new Q4(),c=new V3();m.decompose(a,b,c);p.fly={t:0,dur,pos:a,quat:b};p.loc=loc}
 function tickPicks(dt){const m=new THREE.Matrix4(),pp=new V3(),qq=new Q4(),sc=new V3();
@@ -1777,13 +1814,13 @@ function tickPicks(dt){const m=new THREE.Matrix4(),pp=new V3(),qq=new Q4(),sc=ne
 
 // ---------- HUD line (what you are holding / how to deal) ----------
 const HUD=document.createElement('div');HUD.className='playhud';HUD.hidden=true;document.body.appendChild(HUD);
-{const st=document.createElement('style');st.textContent=`.playhud{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:30;pointer-events:none;font:500 13px 'IBM Plex Mono',monospace;letter-spacing:.04em;color:#f4ecdf;text-shadow:0 1px 3px rgba(0,0,0,.75);white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis}.playhud b{color:${ACC};font-weight:500}`;document.head.appendChild(st)}
-function hud(){if(DEAL.on){HUD.innerHTML='click the felt to deal &nbsp;·&nbsp; click a card to flip it &nbsp;·&nbsp; <b>esc</b> stops';HUD.hidden=false;return}
-  if(held){HUD.innerHTML=`holding the <b>${held.label}</b> &nbsp;·&nbsp; ${held.id==='bread'?'the toaster or the fridge':'it has a spot in the fridge'} &nbsp;·&nbsp; <b>r</b> puts it back`;HUD.hidden=false;return}
+{const st=document.createElement('style');st.textContent=`.playhud{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:30;pointer-events:none;font:500 15px 'Hanken Grotesk',sans-serif;color:#fff6e8;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 14px rgba(0,0,0,.6);white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis}.playhud b{color:#fff;font-weight:700}`;document.head.appendChild(st)}
+function hud(){if(DEAL.on){HUD.innerHTML='click the felt to deal &nbsp;·&nbsp; click a card to flip it &nbsp;·&nbsp; <kbd>Esc</kbd> stops';HUD.hidden=false;return}
+  if(held){HUD.innerHTML=`holding the <b>${held.label}</b> &nbsp;·&nbsp; ${held.id==='bread'?'the toaster or any fridge space':'any free fridge space'} &nbsp;·&nbsp; <kbd>R</kbd> puts it back`;HUD.hidden=false;return}
   HUD.hidden=true}
 function take(p){if(held&&held!==p)putBack(held);held=p;sendTo(p,'hand',.45);hud()}
-function putBack(p){sendTo(p,p.home?'home':'fridge',.55);if(held===p)held=null;hud()}
-function putFridge(p){const go=()=>{sendTo(p,'fridge',.55);hud()};if(held===p)held=null;if(!K.open.fridge){K.open.fridge=true;after(.45,go)}else go();hud()}
+function putBack(p){if(!p.home)p.fs=freeSlot(p,null);if(!p.home&&p.fs<0){toast('The fridge is full');return}sendTo(p,p.home?'home':'fridge',.55);if(held===p)held=null;hud()}
+function putFridge(p){const fs=freeSlot(p,slotAt(fHit));if(fs<0){toast('The fridge is full');return}p.fs=fs;const go=()=>{sendTo(p,'fridge',.55);hud()};if(held===p)held=null;if(!K.open.fridge){K.open.fridge=true;after(.45,go)}else go();hud()}
 addEventListener('keydown',e=>{if(e.key.toLowerCase()==='r'&&held&&mode==='walk'&&!(e.target.closest&&e.target.closest('input,textarea'))){putBack(held)}});
 
 // ---------- part builders (run each time the items are rebuilt) ----------
@@ -1792,11 +1829,15 @@ KX.fridge=g=>{g.traverse(o=>{o.userData.k='fridge'});
   if(GLB.fridge_door)R.fridgeDoor=hinged(g,GLB.fridge_door,.365,.35,'fridge');
   const L=new THREE.PointLight(0xfff3df,0,1.2,2);L.position.set(0,1.08,.12);g.add(L);R.fridgeLight=L;
   if(R.fridgeDoor){const n=new THREE.Mesh(new THREE.PlaneGeometry(.1,.1),std(0xffffff,.85,{map:NOTE}));n.position.set(.02-.365,.72,.2955-.35);n.rotation.set(0,Math.PI,-.06);n.userData.k='fridge';n.castShadow=false;R.fridgeDoor.add(n)}  // on the inside of the door: you see it as it opens
-  R.labels={};for(const p of PICK){const m=new THREE.Mesh(new THREE.PlaneGeometry(.06,.015),std(0xffffff,.9,{map:tapeTex(p.label),transparent:true,emissive:0x000000}));m.position.set(p.slot[0],SH[p.shelf]+.004,.2068);m.rotation.z=rnd(-.04,.04);m.userData.k='fridge';g.add(m);R.labels[p.id]=m}};
+  R.marks=FS.map(f=>{const m=new THREE.Mesh(new THREE.RingGeometry(.043,.05,32),new THREE.MeshBasicMaterial({color:0x4a5661,transparent:true,opacity:.55,depthWrite:false,toneMapped:false}));m.rotation.x=-Math.PI/2;m.position.set(f.x,SH[f.sh]+.003,f.z);m.userData.k='fridge';g.add(m);return m})};
 const WTEX=(()=>{const c=cvs(32,128,(g,w,h)=>{g.fillStyle='rgba(220,238,248,.55)';g.fillRect(0,0,w,h);for(let i=0;i<40;i++){g.fillStyle=`rgba(255,255,255,${Math.random()*.6})`;g.fillRect(Math.random()*w,Math.random()*h,1+Math.random()*2,6+Math.random()*20)}});const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(1,3);return t})();
 const WGEO=(()=>{const g=new THREE.CylinderGeometry(.0068,.0085,1,14,1,true);g.translate(0,-.5,0);return g})();
 KX.sink=g=>{
-  if(GLB.sink_doorl){R.sinkL=hinged(g,GLB.sink_doorl,-.65,.299,'sinkcab');R.sinkR=hinged(g,GLB.sink_doorr,-.03,.299,'sinkcab')}
+  // sink cabinet: fixed shut. A solid body fills it (the model has none below the drawer line) and the doors
+  // meet at a thin dark seam, so nothing inside shows.
+  if(GLB.sink_doorl){R.sinkL=hinged(g,GLB.sink_doorl,-.65,.299);R.sinkR=hinged(g,GLB.sink_doorr,-.03,.299);R.sinkL.scale.x=R.sinkR.scale.x=1.03;
+    const body=new THREE.Mesh(new THREE.BoxGeometry(.62,.53,.58),std(0xe9e6df,.6));body.position.set(-.34,.335,-.01);g.add(body);
+    const seam=new THREE.Mesh(new THREE.BoxGeometry(.004,.52,.004),std(0x2a2724,.7));seam.position.set(-.34,.33,.299);g.add(seam)}
   const b=new THREE.Mesh(new THREE.BoxGeometry(.09,.36,.22),new THREE.MeshBasicMaterial({visible:false}));b.position.set(.25,1.06,-.19);b.userData.k='tap';g.add(b);
   const w=new THREE.Mesh(WGEO,new THREE.MeshStandardMaterial({color:0xffffff,map:WTEX,emissive:0x9cc6dc,emissiveIntensity:.45,transparent:true,opacity:.8,roughness:.05,metalness:0,depthWrite:false}));w.position.set(.25,1.072,-.11);w.visible=false;noRay(w);g.add(w);R.water=w;
   R.splash=[0,1,2].map(i=>{const r=new THREE.Mesh(new THREE.RingGeometry(.006,.009,20),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false}));r.rotation.x=-Math.PI/2;r.position.set(.25,.624,-.11);noRay(r);g.add(r);return r})};
@@ -1940,8 +1981,8 @@ function dealClick(e){const c=cardAt(e);if(c&&!c.fl){c.fl={t:0,a:c.flip,b:c.up?M
 // ---------- clicking and hovering ----------
 function kHit(e){ndc(e);const objs=[...itemGroup.children,...KG.children.filter(o=>!held||o!==held.obj),PG];const hs=ray.intersectObjects(objs,true);
   for(const h of hs){const o=h.object;if(o.isSprite||o.userData.isOutline)continue;let x=o;while(x){if(x.userData.k)return{k:x.userData.k,h};x=x.parent;if(x===scene)break}return null}return null}
-function says(k){if(k.startsWith('pick:')){const p=PBY[k.slice(5)];return held&&held!==p?`Swap for the ${p.label}`:`Take the ${p.label}`}
-  if(k==='fridge')return held?`Put the ${held.label} in the fridge`:K.open.fridge?'Close the fridge':'Open the fridge';
+function says(k){if(k.startsWith('pick:')){const p=PBY[k.slice(5)];return held&&held!==p?`Swap for the ${p.label}`:`Take the ${p.label}, F to eat`}
+  if(k==='fridge')return held&&K.open.fridge?`Put the ${held.label} here`:K.open.fridge?'Close the fridge':'Open the fridge';
   if(k.startsWith('cab:')){const mine=held&&held.home&&held.home[0]===k.slice(4);return mine?`Put the ${held.label} back`:K.open[k]?'Close the cabinet':'Open the cabinet'}
   if(k==='sinkcab')return K.open.sinkcab?'Close the cabinet':'Open the cabinet';
   if(k==='tap')return K.tap?'Turn off the tap':'Turn on the tap';
@@ -1950,7 +1991,7 @@ function says(k){if(k.startsWith('pick:')){const p=PBY[k.slice(5)];return held&&
   if(k==='deck')return 'Deal cards';return ''}
 function act(k){
   if(k.startsWith('pick:')){take(PBY[k.slice(5)]);return true}
-  if(k==='fridge'){if(held)putFridge(held);else K.open.fridge=!K.open.fridge;return true}
+  if(k==='fridge'){if(held&&K.open.fridge)putFridge(held);else K.open.fridge=!K.open.fridge;return true}
   if(k.startsWith('cab:')){const mine=held&&held.home&&held.home[0]===k.slice(4);if(mine){const p=held;held=null;hud();if(!K.open[k]){K.open[k]=true;after(.4,()=>sendTo(p,'home',.55))}else sendTo(p,'home',.55)}else K.open[k]=!K.open[k];return true}
   if(k==='sinkcab'){K.open.sinkcab=!K.open.sinkcab;return true}
   if(k==='tap'){K.tap=!K.tap;return true}
@@ -1962,9 +2003,9 @@ function act(k){
     toast(held?'Only bread goes in the toaster':'The bread is in the cabinet over the sink');return true}
   if(k==='deck'){startDeal();return true}
   return false}
-walkClick=(orig=>function(e){if(DEAL.on){dealClick(e);return}if(busy()){orig(e);return}const h=kHit(e);if(h&&act(h.k))return;orig(e)})(walkClick);
+walkClick=(orig=>function(e){if(DEAL.on){dealClick(e);return}if(busy()){orig(e);return}const h=kHit(e);fHit=h&&h.k==='fridge'?h.h:null;if(h&&act(h.k))return;orig(e)})(walkClick);
 canvas.addEventListener('pointermove',e=>{if(mode!=='walk'||drag&&drag.moved)return;const hv=$('hover'),r=canvas.getBoundingClientRect();
-  let text='';if(DEAL.on){text=cardAt(e)?'Flip':'';canvas.style.cursor=text?'pointer':'crosshair'}else if(!busy()){const h=kHit(e);if(h)text=says(h.k)}
+  let text='';if(DEAL.on){text=cardAt(e)?'Flip':'';canvas.style.cursor=text?'pointer':'crosshair'}else if(!busy()){const h=kHit(e);fHit=h&&h.k==='fridge'?h.h:null;if(h)text=says(h.k)}
   if(text){hv.textContent=text;hv.style.left=(e.clientX-r.left+14)+'px';hv.style.top=(e.clientY-r.top+14)+'px';hv.hidden=false;canvas.style.cursor='pointer';hoverId=null}
   else if(DEAL.on)hv.hidden=true});
 
@@ -2034,7 +2075,7 @@ function nz(t,dur,type,f,q,v){const n=actx.createBufferSource(),fl=actx.createBi
 function crunch(){if(!sndOn())return;try{if(!au())return;const t=actx.currentTime+.01;for(let i=0;i<4;i++)nz(t+i*.035+Math.random()*.015,.05,'bandpass',1800+Math.random()*1600,1.2,.35)}catch(e){}}
 function chopSnd(){if(!sndOn())return;try{if(!au())return;const t=actx.currentTime+.005,o=actx.createOscillator(),g=actx.createGain();o.frequency.setValueAtTime(210,t);o.frequency.exponentialRampToValueAtTime(80,t+.09);g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.0001,t+.14);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+.16);nz(t,.04,'highpass',2500,.7,.25)}catch(e){}}
 // a bite: find the edge of what is left on the side facing you, take a round bite out of it
-function bite(p){if(!p||!p.obj||p.loc==='none')return;const inv=p.obj.matrix.clone().invert(),cl=persp.position.clone().applyMatrix4(inv).sub(p.c);cl.y=0;if(cl.lengthSq()<1e-8)cl.set(0,0,1);cl.normalize();
+function bite(p){if(!p||!p.obj||p.loc==='none')return;const inv=p.obj.matrix.clone().invert(),eye=held===p?new V3(0,0,-.4).applyQuaternion(persp.quaternion).add(persp.position):persp.position.clone(),cl=eye.applyMatrix4(inv).sub(p.c);cl.y=0;if(cl.lengthSq()<1e-8)cl.set(0,0,1);cl.normalize();
   let hit=null;for(const da of [0,.5,-.5,1,-1,1.6,-1.6,2.3,-2.3,3.14]){const a=Math.atan2(cl.z,cl.x)+da+(Math.random()-.5)*.3,d=new V3(Math.cos(a),0,Math.sin(a));
     for(let s=p.F.r;s>0;s-=.004){const q=p.c.clone().addScaledVector(d,s);if(keepP(p,q)){hit=q.addScaledVector(d,.014);break}}if(hit)break}
   crunch();p.left--;if(held===p)p.dip=1;
@@ -2080,14 +2121,14 @@ act=(orig=>function(k){if(k==='board'){if(held)putBoard(held);else if(onBoard().
 let lastE=null,SUP=false,lp=null;
 const hovered=()=>{if(!lastE)return null;const h=kHit(lastE);return h&&h.k.startsWith('pick:')?PBY[h.k.slice(5)]:null};
 function biteAt(e){const h=kHit(e);const p=h&&h.k.startsWith('pick:')?PBY[h.k.slice(5)]:held;if(p)bite(p)}
-walkClick=(orig=>function(e){if(SUP){SUP=false;return}if(e.button===2&&!DEAL.on){biteAt(e);return}orig(e)})(walkClick);
+walkClick=(orig=>function(e){if(SUP){SUP=false;return}if(e.button===2)return;orig(e)})(walkClick);
 canvas.addEventListener('contextmenu',e=>{if(mode==='walk')e.preventDefault()});
 addEventListener('keydown',e=>{if(e.key.toLowerCase()!=='f'||mode!=='walk'||busy()||(e.target.closest&&e.target.closest('input,textarea')))return;const p=held||hovered();if(p)bite(p)});
 canvas.addEventListener('pointermove',e=>{lastE=e;if(lp&&Math.hypot(e.clientX-lp.x,e.clientY-lp.y)>10){clearTimeout(lp.t);lp=null}});
 canvas.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'||mode!=='walk')return;const ev={clientX:e.clientX,clientY:e.clientY};lp={x:e.clientX,y:e.clientY,t:setTimeout(()=>{lp=null;const h=kHit(ev);const p=h&&h.k.startsWith('pick:')?PBY[h.k.slice(5)]:held;if(p){bite(p);SUP=true}},500)}});
 addEventListener('pointerup',()=>{if(lp){clearTimeout(lp.t);lp=null}});
-hud=(orig=>function(){orig();if(held&&!DEAL.on){const touch=matchMedia('(pointer:coarse)').matches;
-  HUD.innerHTML=`holding the <b>${held.label}</b> &nbsp;·&nbsp; ${touch?'<b>hold</b> to take a bite':'<b>right click</b> or <b>f</b> takes a bite'} &nbsp;·&nbsp; the board cuts it &nbsp;·&nbsp; <b>r</b> puts it back`}})(hud);
+hud=(orig=>function(){orig();document.body.classList.toggle('holding',!!held);$('hover').hidden=true;if(held&&!DEAL.on){const touch=matchMedia('(pointer:coarse)').matches;
+  HUD.innerHTML=`holding the <b>${held.label}</b> &nbsp;·&nbsp; ${touch?'<kbd>Hold</kbd> to eat':'<kbd>F</kbd> to eat'} &nbsp;·&nbsp; the board cuts it &nbsp;·&nbsp; <kbd>R</kbd> puts it back`}})(hud);
 // ---------- every frame ----------
 let klast=performance.now();
 function kitchenFrame(now){const dt=Math.min(.05,(now-klast)/1000);klast=now;
@@ -2095,7 +2136,6 @@ function kitchenFrame(now){const dt=Math.min(.05,(now-klast)/1000);klast=now;
   for(const k in K.a){K.a[k]+=((K.open[k]?1:0)-K.a[k])*Math.min(1,dt*(reduced?60:5))}
   const fa=io(K.a.fridge);if(R.fridgeDoor)R.fridgeDoor.rotation.y=1.52*fa;if(R.fridgeLight)R.fridgeLight.intensity=.55*fa;
   for(const key of['cab:uppercab','cab:uppercabopen']){const d=R[key];if(d){const a=io(K.a[key]);d[0].rotation.y=-1.75*a;d[1].rotation.y=1.75*a}}
-  if(R.sinkL){const a=io(K.a.sinkcab);R.sinkL.rotation.y=-1.6*a;R.sinkR.rotation.y=1.6*a}
   // tap: the stream grows from the spout; turned off, its top falls into the basin
   if(K.tap){K.tg=Math.min(1,K.tg+dt*5);K.tf=0}else if(K.tg>0){K.tf=Math.min(1,K.tf+dt*5);if(K.tf>=1){K.tg=K.tf=0}}
   if(R.water){const L=.448,top=1.072-K.tf*L,bot=1.072-K.tg*L;R.water.visible=K.tg>0&&top-bot>.002;R.water.position.y=top;R.water.scale.y=Math.max(.001,top-bot);WTEX.offset.y-=dt*4.5;
@@ -2117,7 +2157,7 @@ function kitchenFrame(now){const dt=Math.min(.05,(now-klast)/1000);klast=now;
   if(R.slices){const show=T.st==='toasting'||T.st==='done';const lv=Math.round(T.lvl*20)/20;if(R.tlevel!==lv){R.tlevel=lv;const m=sliceMats(lv);R.slices.forEach(s=>s.material=m)}R.slices.forEach(s=>{s.visible=show;s.position.y=T.y})
     const glow=T.st==='toasting'?.55+.15*Math.sin(now/120):0;R.tglow.forEach(p=>p.material.opacity=glow);R.tlight.intensity=glow*.5}
   // the label for what you hold glows a little in the fridge
-  if(R.labels)for(const id in R.labels){const m=R.labels[id].material;if(held&&held.id===id)m.emissive.set(ACC).multiplyScalar(.25+.2*Math.sin(now/220));else m.emissive.setRGB(0,0,0)}
+  if(R.marks){const aim=held&&K.open.fridge&&fHit?freeSlot(held,slotAt(fHit)):-1;R.marks.forEach((m,i)=>{const on=i===aim;m.material.color.set(on?ACC:0x4a5661);m.material.opacity=on?.75+.25*Math.sin(now/180):held?.65:.5;m.scale.setScalar(on?1.15:1)})}
   tickPicks(dt);
   const pn=anchor('pokertable');if(pn){PG.matrix.copy(pn.matrixWorld);PG.matrixWorldNeedsUpdate=true}tickCards(dt);
   requestAnimationFrame(kitchenFrame)}
