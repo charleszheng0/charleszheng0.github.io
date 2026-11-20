@@ -1240,14 +1240,23 @@ openCard=(orig=>it=>{if(it.tag==='resume'){openMonitor(it);return}hintStep();
 addEventListener('keydown',e=>{if(!zoomBack)return;const k=e.key.toLowerCase();
   if(k==='escape'||['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)){keys[k]=false;exitZoom()}});
 
-// ---- glow on the five clickable objects (warm pulse; stronger on hover)
+// ---- highlight on the clickable objects: a steady outline around each one (no glow, no pulse); thicker and brighter on hover
 let GLOW=[],hoverId=null;
-const HALOT=tex(cvs(128,128,g=>{const r=g.createRadialGradient(64,64,0,64,64,64);r.addColorStop(0,'rgba(255,255,255,.9)');r.addColorStop(.45,'rgba(255,255,255,.35)');r.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=r;g.fillRect(0,0,128,128)}));
-let HALOS=[];
-function refreshGlow(){HALOS.forEach(h=>scene.remove(h));HALOS=[];GLOW=[];for(const it of state.items){if(!CLICK[it.t])continue;const n=nodes[it.id];if(!n)continue;const mats=[];
-  {n.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(n),c=bb.getCenter(new THREE.Vector3()),sz=bb.getSize(new THREE.Vector3()),r=Math.max(sz.x,sz.y,sz.z)*1.35+.2;
-   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:HALOT,color:TH?new THREE.Color(TH.acc):new THREE.Color(1,.68,.32),transparent:true,opacity:.4,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));sp.position.copy(c);sp.scale.set(r,r,1);sp.userData.halo=it.id;scene.add(sp);HALOS.push(sp)}
-  n.traverse(o=>{if(!o.isMesh||!o.material||!o.material.emissive||o.userData.isScreen)return;if(!o.userData.glowMat){o.material=o.material.clone();o.userData.glowMat=true;addRim(o.material)}mats.push(o.material)});GLOW.push({id:it.id,mats})}}
+const OUTC=TH?new THREE.Color(TH.acc):new THREE.Color(1,.68,.32);
+// outline = inverted hull: a copy of the mesh pushed out along smoothed normals, back faces only, so only the rim around the object shows
+const OUTU={uC:{value:OUTC.clone()}};
+function outlineMat(){return new THREE.ShaderMaterial({uniforms:{uC:OUTU.uC,uW:{value:.0035},uA:{value:.9}},side:THREE.BackSide,transparent:true,depthWrite:false,fog:false,toneMapped:false,
+  vertexShader:'uniform float uW;void main(){vec4 wp=modelMatrix*vec4(position,1.);vec3 wn=normalize(mat3(modelMatrix)*normal);wp.xyz+=wn*uW*distance(cameraPosition,wp.xyz);gl_Position=projectionMatrix*viewMatrix*wp;}',
+  fragmentShader:'uniform vec3 uC;uniform float uA;void main(){gl_FragColor=vec4(uC,uA);}'})}
+function smoothGeo(g){g=g.clone();const pos=g.attributes.position,acc=new Map(),key=i=>pos.getX(i).toFixed(4)+','+pos.getY(i).toFixed(4)+','+pos.getZ(i).toFixed(4);
+  if(!g.attributes.normal)g.computeVertexNormals();const nrm=g.attributes.normal;
+  for(let i=0;i<pos.count;i++){const k=key(i),v=acc.get(k)||new THREE.Vector3();v.x+=nrm.getX(i);v.y+=nrm.getY(i);v.z+=nrm.getZ(i);acc.set(k,v)}
+  const out=new Float32Array(pos.count*3);for(let i=0;i<pos.count;i++){const v=acc.get(key(i)).clone().normalize();out[i*3]=v.x;out[i*3+1]=v.y;out[i*3+2]=v.z}
+  g.setAttribute('normal',new THREE.BufferAttribute(out,3));return g}
+function refreshGlow(){GLOW=[];for(const it of state.items){if(!CLICK[it.t])continue;const n=nodes[it.id];if(!n)continue;const mat=outlineMat(),list=[];
+  n.traverse(o=>{if(o.isMesh&&!o.userData.isOutline&&o.geometry&&o.geometry.attributes.position)list.push(o)});
+  for(const o of list){if(o.userData.outline)continue;const h=new THREE.Mesh(smoothGeo(o.geometry),mat);h.userData.isOutline=true;h.raycast=()=>{};h.renderOrder=-1;o.add(h);o.userData.outline=h}
+  GLOW.push({id:it.id,mat})}}
 rebuildItems=(orig=>function(){orig();refreshGlow()})(rebuildItems);refreshGlow();
 canvas.addEventListener('pointermove',e=>{if(mode!=='walk'||drag){hoverId=null;return}const it=hitItem(e);hoverId=it&&CLICK[it.t]?it.id:null});
 const GC=TH?new THREE.Color(TH.acc):new THREE.Color(1,.68,.32);
@@ -1476,12 +1485,11 @@ const WALLS={
   lab:[['blueprint',1.065,2.15],['floatshelf',1.065,.95],['serverrack',1.3,1.6,Math.PI/2],['floorlamp',1.28,.45,0]]};
 (WALLS[WALLD]||[]).forEach(([t,x,z,ry])=>state.items.push({id:state.next++,t,x,z,ry:ry===undefined?Math.PI/2:ry,tag:''}));
 if(typeof buildNav==='function'){rebuildItems();buildNav()}
-// ---- per-frame: glow pulse, steam wisps, dust drift, hint visibility
+// ---- per-frame: outline hover, steam wisps, dust drift, hint visibility
 let plast=performance.now();
 function portfolioFrame(now){const dt=Math.min(.05,(now-plast)/1000);plast=now;const walk=mode==='walk';
-  const wave=reduced?.6:.5+.5*Math.sin(now/480),pulse=.16+.2*wave;RIM.uRim.value=1.3+1.2*wave;tickExtras(now,dt,walk);
-  for(const h of HALOS)h.material.opacity=h.userData.halo===hoverId?.85:.3+.3*wave;
-  for(const gI of GLOW){const k=gI.id===hoverId?.7:pulse;for(const m of gI.mats)m.emissive.copy(GC).multiplyScalar(k)}
+  tickExtras(now,dt,walk);
+  for(const gI of GLOW){const on=gI.id===hoverId;gI.mat.uniforms.uW.value=on?.006:.0035;gI.mat.uniforms.uA.value=on?1:.8}
   for(const a of animated){const w=a.userData.wisp;if(!w)continue;const t=reduced?.4:((now/2400)+w.i/w.n)%1;
     a.position.set(w.x+Math.sin(now/650+w.i*1.9)*.035*t,w.y-.05+t*.55,w.z+Math.cos(now/800+w.i)*.03*t);const sc=w.r*(1.4+t*4.2);a.scale.set(sc,sc,1);a.material.opacity=.42*Math.sin(Math.PI*t)}
   BEAM.grp.visible=walk&&ENV.beam>.02;
