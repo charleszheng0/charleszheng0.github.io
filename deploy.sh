@@ -9,4 +9,4 @@ cp "$P"/models/*.json "$S/models/"
 rsync -a --delete --exclude .DS_Store "$P/img/" "$S/img/"
 touch "$S/.nojekyll"
 cd "$S"; git add -A
-git diff --cached --quiet || { git commit -m "Update site"; git push; }
+git diff --cached --quiet || { git commit -m "Update site" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"; git push; }
