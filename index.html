@@ -288,7 +288,7 @@ table{color:inherit;font:inherit}
     <h1>Charles Zheng <span>developer and creator</span></h1>
     <div class="seg" role="group" aria-label="Portfolio view" id="viewgrp">
       <button id="v-house" aria-pressed="true">First person</button>
-      <button id="v-rec" aria-pressed="false">Classic</button>
+      <button id="v-rec" aria-pressed="false">Recruiter</button>
     </div>
     <div class="seg" role="group" aria-label="View mode">
       <button id="m-plan" aria-pressed="true">Plan</button>
@@ -333,7 +333,7 @@ table{color:inherit;font:inherit}
   <aside class="props idle" id="props" aria-live="polite"></aside>
 </div>
 
-<div class="recbar" id="recbar" hidden role="group" aria-label="Portfolio view"><button id="r-house" aria-pressed="false">First person</button><button id="r-rec" aria-pressed="true">Classic</button></div>
+<div class="recbar" id="recbar" hidden role="group" aria-label="Portfolio view"><button id="r-house" aria-pressed="false">First person</button><button id="r-rec" aria-pressed="true">Recruiter</button></div>
 <main class="rec" id="recruiter" hidden><iframe class="cvframe" src="classic.html" title="Charles Zheng, classic portfolio page"></iframe></main>
 
 <div class="modal" id="modal" hidden><div class="box">
@@ -394,7 +394,24 @@ const TX={
   crt:tex(cvs(512,384,(g,w,h)=>{g.fillStyle='#160d03';g.fillRect(0,0,w,h);const tabs=['TIKTOK','YOUTUBE','INSTAGRAM'];tabs.forEach((t,i)=>{g.fillStyle=i===0?'#ffd479':'rgba(255,212,121,.35)';g.fillRect(20+i*160,20,150,40);g.fillStyle=i===0?'#160d03':'#ffd479';g.font='500 22px IBM Plex Mono, monospace';g.fillText(t,32+i*160,48)});
     for(let i=0;i<4;i++){g.fillStyle='rgba(255,212,121,.22)';g.fillRect(20+i*120,90,108,190);g.fillStyle='#ffd479';g.beginPath();g.moveTo(62+i*120,165);g.lineTo(62+i*120,205);g.lineTo(90+i*120,185);g.fill()}
     g.fillStyle='#ffd479';g.font='20px IBM Plex Mono, monospace';g.fillText('◀  CH 01  ▶   12.4K FOLLOWERS',22,330);g.globalAlpha=.25;g.fillStyle='#000';for(let y=0;y<h;y+=4)g.fillRect(0,y,w,2)})),
-  mon:tex(cvs(512,320,(g,w,h)=>{g.fillStyle='#c9e3b0';g.fillRect(0,0,w,h);g.fillStyle='#f7f7f2';g.fillRect(90,20,330,290);g.fillStyle='#1d1c19';g.font='600 22px Inter, sans-serif';g.fillText('Charles Zheng',110,56);g.fillStyle='#2f6fb5';g.fillRect(110,68,290,3);g.fillStyle='#8f8b82';for(let i=0;i<13;i++)g.fillRect(110,86+i*16,i%4===0?130:250-((i*37)%70),6)})),
+  mon:tex(cvs(666,320,(g,w,h)=>{g.fillStyle='#c9e3b0';g.fillRect(0,0,w,h);g.translate(77,0);g.fillStyle='#f7f7f2';g.fillRect(90,20,330,290);g.fillStyle='#1d1c19';g.font='600 22px Inter, sans-serif';g.fillText('Charles Zheng',110,56);g.fillStyle='#2f6fb5';g.fillRect(110,68,290,3);g.fillStyle='#8f8b82';for(let i=0;i<13;i++)g.fillRect(110,86+i*16,i%4===0?130:250-((i*37)%70),6)})),
+  ramen:tex(cvs(512,512,(g,w,h)=>{const R=(a,b)=>a+Math.random()*(b-a),c=256;
+    // broth: tonkotsu gold, darker at the rim
+    let gr=g.createRadialGradient(c,c,20,c,c,256);gr.addColorStop(0,'#f3cd8a');gr.addColorStop(.7,'#e4b26a');gr.addColorStop(1,'#b8823e');g.fillStyle=gr;g.fillRect(0,0,w,h);
+    // noodles: many thin wavy strands, pale wheat with a soft shadow
+    for(let i=0;i<70;i++){const y0=R(150,420),x0=R(60,200),len=R(140,300),amp=R(4,10),fr=R(.04,.08),ph=R(0,6);
+      for(const [col,lw,dy] of [['rgba(120,80,30,.35)',7,2],['#f3dc9c',5,0],['rgba(255,246,214,.6)',1.6,-1.2]]){g.strokeStyle=col;g.lineWidth=lw;g.beginPath();
+        for(let t=0;t<=len;t+=4){const x=x0+t,y=y0+Math.sin(t*fr+ph)*amp+dy+(t/len)*R(-1,1);t?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}}
+    // chashu: two rolled pork slices
+    for(const [x,y,r] of [[340,170,62],[380,290,54]]){g.fillStyle='#a8603a';g.beginPath();g.ellipse(x,y,r,r*.9,.3,0,7);g.fill();
+      g.fillStyle='#f6dcc4';g.beginPath();g.ellipse(x,y,r*.82,r*.72,.3,0,7);g.fill();g.strokeStyle='rgba(176,110,80,.75)';g.lineWidth=3;
+      for(let k=1;k<5;k++){g.beginPath();g.ellipse(x+k*2,y-k,r*.16*k,r*.13*k,.3,0,7);g.stroke()}}
+    // sesame-oil swirl and fat drops catching light
+    g.fillStyle='rgba(150,80,20,.18)';for(let i=0;i<14;i++){g.beginPath();g.ellipse(R(120,400),R(120,400),R(10,26),R(6,14),R(0,3),0,7);g.fill()}
+    for(let i=0;i<160;i++){const x=R(30,482),y=R(30,482);if(Math.hypot(x-c,y-c)>235)continue;const r=R(1.5,7);g.fillStyle='rgba(255,226,150,.55)';g.beginPath();g.arc(x,y,r,0,7);g.fill();g.fillStyle='rgba(255,252,235,.85)';g.beginPath();g.arc(x-r*.35,y-r*.35,r*.35,0,7);g.fill()}
+    // green onion rings
+    for(let i=0;i<46;i++){const x=R(110,430),y=R(80,450);if(Math.hypot(x-c,y-c)>215)continue;const r=R(5,9);g.fillStyle='#3f8a2c';g.beginPath();g.arc(x,y,r,0,7);g.fill();g.fillStyle='#bfe39a';g.beginPath();g.arc(x,y,r*.55,0,7);g.fill()}
+  })),
   lap:tex(cvs(384,256,(g,w,h)=>{g.fillStyle='#15110d';g.fillRect(0,0,w,h);g.fillStyle='#efe4d4';g.font='600 22px "Hanken Grotesk", sans-serif';g.fillText("What I\u2019m listening to",20,40);
     g.font='15px "Hanken Grotesk", sans-serif';['Lex Fridman Podcast','Hidden Brain','The Colin and Samir Show','Everything Everywhere Daily'].forEach((t,k)=>{g.fillStyle='#e2a65e';g.fillRect(20,72+k*40,3,22);g.fillStyle='#d9ccb8';g.fillText(t,32,89+k*40)})})),
   phone:tex(cvs(64,128,(g,w,h)=>{g.fillStyle='#1d1c19';g.fillRect(0,0,w,h);g.fillStyle='#e07a4f';g.fillRect(8,14,48,48);g.fillStyle='#f3f3ef';g.fillRect(8,72,40,5);g.fillRect(8,84,28,4);g.beginPath();g.arc(32,108,8,0,7);g.fill()})),
@@ -491,7 +508,7 @@ const CAT=[
   {t:'nightstand',n:'Nightstand',w:.45,d:.4,kind:'floor',surface:.5,c:0x8a6a4a,b:g=>{B(g,.45,.5,.4,W(0x8a6a4a),0,0,0);B(g,.38,.01,.01,W(0x5a3a24),0,.3,.2)}}
  ]},
  {group:'Kitchen',items:[
-  {t:'fridge',n:'Retro fridge',w:.75,d:.7,kind:'floor',surface:1.76,c:0xefe6d2,tag:'macros',b:g=>{
+  {t:'fridge',n:'Retro fridge',w:.75,d:.7,kind:'floor',surface:1.76,c:0xefe6d2,b:g=>{
     const en=PH(0xefe6d2,40),ch=PH(0xd8d8d8,90);
     B(g,.69,1.74,.7,en,0,0,0);B(g,.75,1.74,.64,en,0,0,0);[[-.345,-.32],[.345,-.32],[-.345,.32],[.345,.32]].forEach(([x,z])=>C(g,.03,.03,1.74,en,x,0,z,12));
     B(g,.7,.012,.02,0xb9ae96,0,1.24,.35);B(g,.012,1.7,.02,0xd9cfb8,-.36,.02,.34);
@@ -750,7 +767,7 @@ function delSel(){if(!sel)return;snapshot();if(sel.type==='item'){const id=sel.i
 
 // ---------------- tip / toast ----------------
 function refreshTip(){const t={plan:{select:'Click an object to select it, drag to move it. Drag empty floor to pan, scroll to zoom.',wall:'Drag along the grid to draw a wall. Walls snap to 0.5 m.',door:'Drag over a wall to cut a door opening.',window:'Drag over a wall to add a window.',front:'Drag over a wall to add the front door. Visitors start here.',erase:'Click an object or a wall to delete it.',place:`Click the floor to place: ${placing?TYPES[placing].n:''}. R turns it. Hold Shift to place more.`}[tool],
-  orbit:'Drag to orbit, right-drag to pan, scroll to zoom. Click an object to select it.',walk:moveMode==='keys'?'WASD mode: W A S D to walk, Shift to jog, drag to look. Click a chair to sit, or an object to open it.':'Click mode: click the floor to walk there (you go around furniture), drag to look. Click a chair to sit.'}[mode];$('tip').textContent=t||''}
+  orbit:'Drag to orbit, right-drag to pan, scroll to zoom. Click an object to select it.',walk:moveMode==='keys'?'WASD mode: W A S D to walk, Shift to jog, move the mouse to look. Click a chair to sit, or an object to open it.':'Click mode: click the floor to walk there (you go around furniture), move the mouse to look. Click a chair to sit.'}[mode];$('tip').textContent=t||''}
 let toastT=null;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),1800)}
 
 // ---------------- modes ----------------
@@ -814,12 +831,12 @@ canvas.addEventListener('pointerdown',e=>{
 });
 function nearWall(p){let best=null;for(const w of state.walls){const r=segDist(p.x,p.z,w);if(r.d<.18&&(!best||r.d<best.d))best={d:r.d,w}}return best&&best.w}
 canvas.addEventListener('pointermove',e=>{
-  if(mode==='walk'&&!drag){const it=hitItem(e);const hv=$('hover');if(it&&(it.tag||SEATS[it.t])){const r=canvas.getBoundingClientRect();hv.textContent=SEATS[it.t]?'Sit down':TAGS[it.tag];hv.style.left=(e.clientX-r.left+14)+'px';hv.style.top=(e.clientY-r.top+14)+'px';hv.hidden=false;canvas.style.cursor='pointer'}else{hv.hidden=true;canvas.style.cursor='grab'}}
+  if(mode==='walk'&&!drag){const it=hitItem(e);const hv=$('hover');if(it&&(it.tag||SEATS[it.t])){const r=canvas.getBoundingClientRect();hv.textContent=SEATS[it.t]?'Sit down':TAGS[it.tag];hv.style.left=(e.clientX-r.left+14)+'px';hv.style.top=(e.clientY-r.top+14)+'px';hv.hidden=false;canvas.style.cursor='pointer'}else{hv.hidden=true;canvas.style.cursor='default'}}
   const p=mode!=='walk'?ground(e):null;if(p)$('coords').textContent=`x ${p.x.toFixed(2)} · z ${p.z.toFixed(2)}`;
   if(mode==='plan'&&ghost&&p&&!drag){const T=TYPES[placing];let x=snap(p.x,.05),z=snap(p.z,.05),ry=ghostRy,y=0;
     if(T.kind==='wall'){const ws=wallSnap(p.x,p.z);if(ws){x=ws.x;z=ws.z;ry=ws.ry}y=T.y||1.5}else if(T.kind==='top')y=surfaceAt(x,z);else if(T.kind==='ceil')y=H;ghost.position.set(x,y,z);ghost.rotation.y=ry}
   if(!drag)return;
-  if(drag.walk){const dx=e.clientX-drag.lx,dy=e.clientY-drag.ly;drag.lx=e.clientX;drag.ly=e.clientY;if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>5)drag.moved=true;if(drag.moved){const k=e.pointerType==='touch'?.006:.004;yaw+=dx*k;pitch=Math.max(-1.3,Math.min(1.2,pitch+dy*k));persp.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'))}return}
+  if(drag.walk){const dx=e.clientX-drag.lx,dy=e.clientY-drag.ly;drag.lx=e.clientX;drag.ly=e.clientY;if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>5)drag.moved=true;if(drag.moved&&e.pointerType!=='mouse'){const k=e.pointerType==='touch'?.006:.004;yaw+=dx*k;pitch=Math.max(-1.3,Math.min(1.2,pitch+dy*k));persp.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'))}return}
   if(drag.pan){plan.cx=drag.cx-(e.clientX-drag.x)/plan.zoom;plan.cz=drag.cz-(e.clientY-drag.y)/plan.zoom;updateOrtho();return}
   if(drag.wall&&p){let x2=snap(p.x,.5),z2=snap(p.z,.5);if(Math.abs(x2-drag.x1)>Math.abs(z2-drag.z1)*2.5)z2=drag.z1;else if(Math.abs(z2-drag.z1)>Math.abs(x2-drag.x1)*2.5)x2=drag.x1;drag.x2=x2;drag.z2=z2;
     preview.geometry.setFromPoints([new THREE.Vector3(drag.x1,.05,drag.z1),new THREE.Vector3(x2,.05,z2)]);const L=Math.hypot(x2-drag.x1,z2-drag.z1)||.01;previewBox.scale.set(L,1,1);previewBox.position.set((drag.x1+x2)/2,H/2,(drag.z1+z2)/2);previewBox.rotation.y=-Math.atan2(z2-drag.z1,x2-drag.x1);return}
@@ -878,7 +895,7 @@ function starter(){const s={v:1,style:17,walls:[],items:[],next:1};const W=(x1,z
   W(1.0,0,2.5,0);W(2.5,0,4,0,'window');W(4,0,6.5,0);W(1.0,0,1.0,5);W(6.5,0,6.5,5);W(1.0,5,2.75,5);W(2.75,5,3.75,5,'front');W(3.75,5,6.5,5);
   const I=(t,x,z,ry=0,ex={})=>s.items.push(Object.assign({id:s.next++,t,x,z,ry,tag:TYPES[t].tag||''},ex));
   I('snakeplant',1.3,4.62);I('pokertable',1.6,3.5,Math.PI/2);I('blackstool',2.12,3.15,-Math.PI/2);I('blackstool',2.12,3.85,-Math.PI/2);
-  I('desk',2.75,.5);I('officechair',2.75,1.22,Math.PI);I('monitor',2.75,.3);I('laptop',2.25,.48,.25);I('keyboard',2.75,.7);I('journal',3.27,.5,.15);I('phone',3.3,.8,-.3);I('desklamp',3.4,.15,-Math.PI/2);
+  I('desk',2.75,.5);I('officechair',2.75,1.22,Math.PI);I('monitor',2.75,.3);I('laptop',1.98,.5,.3);I('keyboard',2.75,.7);I('journal',3.5,.5,.15);I('phone',3.48,.8,-.3);I('desklamp',3.6,.15,-Math.PI/2);
   I('sofa',4.1,1.6,Math.PI/2);I('coffeetable',4.85,1.6,Math.PI/2);I('succulent',4.85,1.5);I('tvconsole',6.19,1.4,-Math.PI/2);I('flattv',6.395,1.4,-Math.PI/2);I('clock',5.2,.105);I('leafplant',6.1,.42);I('blinds',3.25,.065);I('curtain',2.32,.065);I('curtain',4.18,.065);I('ceilfan',4.7,1.6);
   // kitchen: spices like the reference photo, one small light on a tripod
   I('fridge',6.08,4.55,-Math.PI/2);I('pans',6.1,4.55,-Math.PI/2);I('stove',6.1,3.78,-Math.PI/2);I('pot',6.1,3.7);I('sink',6.14,2.75,-Math.PI/2);I('spices',6.02,2.3,-Math.PI/2);I('toaster',6.33,2.32,-Math.PI/2);I('backsplash',6.435,3.2,-Math.PI/2);I('knifebar',6.435,2.35,-Math.PI/2);I('uppercab',6.435,2.6,-Math.PI/2);I('uppercabopen',6.435,3.5,-Math.PI/2);
@@ -909,9 +926,18 @@ if(!/[?&]code\b/.test(location.search)&&THREE.GLTFLoader){
     phone:g=>{P(g,.066,.14,BM(TX.phone),0,.0102,0,-Math.PI/2)},
     desklamp:g=>{const l=new THREE.PointLight(0xffd9a0,.6,2.5,2);l.position.set(0,.3,.08);g.add(l)},
     flattv:g=>{const sc=P(g,1.36,.76,new THREE.MeshPhongMaterial({color:0x0c0c0e,shininess:40,specular:0x1c1c1c}),0,0,.0362);sc.userData.isScreen=true},
-    fridge:g=>{P(g,.22,.28,BM(TX.note),.08,1.45,.353);P(g,.1,.1,M(0xffe27a),-.12,.78,.353);P(g,.05,.16,BM(TX.sticker),-.378,1.45,.05,0,-Math.PI/2)},
+    fridge:g=>{P(g,.05,.16,BM(TX.sticker),-.378,1.45,.05,0,-Math.PI/2)},
     stove:g=>{P(g,.7,.14,BM(TX.panel),0,1.01,-.268);steam(g,4,.04,.2,-.19,1.0,-.14)},
-    pot:g=>{const b=new THREE.Mesh(new THREE.CircleGeometry(.142,32),BM(TX.broth));b.rotation.x=-Math.PI/2;b.position.y=.145;g.add(b);steam(g,5,.05,.25,0,.25,0)},
+    pot:g=>{const y=.145,b=new THREE.Mesh(new THREE.CircleGeometry(.142,48),new THREE.MeshStandardMaterial({map:TX.ramen,roughness:.22,metalness:0}));b.rotation.x=-Math.PI/2;b.position.y=y;g.add(b);
+      // two soft-boiled egg halves: white dome, jammy yolk on the cut face
+      const white=new THREE.MeshStandardMaterial({color:0xf6efe0,roughness:.35}),yolk=new THREE.MeshStandardMaterial({color:0xf09a1c,roughness:.3,emissive:0x3a1a00});
+      [[-.055,.045,.4],[-.005,.08,-.5]].forEach(([x,z,r])=>{const e=new THREE.Group();e.position.set(x,y+.004,z);e.rotation.set(.12,r,.08);e.scale.set(1,1,1.3);
+        const d=new THREE.Mesh(new THREE.SphereGeometry(.03,20,10,0,Math.PI*2,Math.PI/2,Math.PI/2),white);d.scale.y=.6;e.add(d);
+        const fc=new THREE.Mesh(new THREE.CircleGeometry(.03,28),white);fc.rotation.x=-Math.PI/2;e.add(fc);
+        const yk=new THREE.Mesh(new THREE.CircleGeometry(.017,24),yolk);yk.rotation.x=-Math.PI/2;yk.position.y=.0015;e.add(yk);g.add(e)});
+      // nori sheet leaning on the rim
+      const nori=new THREE.Mesh(new THREE.PlaneGeometry(.075,.1),new THREE.MeshStandardMaterial({color:0x1f2a1a,roughness:.6,side:THREE.DoubleSide}));nori.position.set(.02,y+.035,-.115);nori.rotation.x=-.35;g.add(nori);
+      steam(g,6,.05,.28,0,.25,0)},
     led:g=>{P(g,.145,.145,new THREE.MeshBasicMaterial({map:TX.led}),0,.33,.012,-.15);const l=new THREE.PointLight(0xffb05a,.8,2.8,2);l.position.set(0,.33,.2);g.add(l)}};
   let ENV=null;try{if(THREE.RoomEnvironment){const pm=new THREE.PMREMGenerator(renderer);ENV=pm.fromScene(new THREE.RoomEnvironment(),.04).texture;pm.dispose()}}catch(e){}
   const loader=new THREE.GLTFLoader();
@@ -957,13 +983,18 @@ const angD=(a,b)=>{let d=a-b;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*
 const ease3=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 function animTo(to,dur,done){phys.anim={t:0,dur:reduced?.01:dur,from:{x:phys.bx,z:phys.bz,y:phys.eyeY,yaw,pitch},to,done};phys.path=null;phys.vx=phys.vz=0}
 function seatFront(it){return {x:Math.sin(it.ry),z:Math.cos(it.ry)}}
+// places to stand before sitting: in front (also slid along a wide seat), then past its ends, then behind
+function seatSpots(it){const f=seatFront(it),sx=f.z,sz=-f.x,T=TYPES[it.t],fo=Math.max(T.d/2+.32,.55),so=T.w/2+.32,out=[];
+  for(const o of [fo,fo-.12,fo+.15])for(const l of [0,-.3,.3,-.6,.6,-T.w/2+.2,T.w/2-.2])out.push({x:it.x+f.x*o+sx*l,z:it.z+f.z*o+sz*l});
+  for(const l of [so,-so])for(const o of [0,.3,-.2])out.push({x:it.x+sx*l+f.x*o,z:it.z+sz*l+f.z*o});
+  out.push({x:it.x-f.x*fo,z:it.z-f.z*fo});return out}
 function sitOn(it){const S=SEATS[it.t];if(phys.seated===it.id)return;if(phys.seated){standUp(()=>sitOn(it));return}
-  const f=seatFront(it),T=TYPES[it.t],off=Math.max(T.d/2+.38,.6);const cands=[[f.x,f.z],[-f.x,-f.z],[f.z,-f.x],[-f.z,f.x]].map(([dx,dz])=>({x:it.x+dx*off,z:it.z+dz*off})).filter(p=>free(p.x,p.z));
+  const f=seatFront(it),cands=seatSpots(it).filter(p=>free(p.x,p.z));
   if(!cands.length){toast('That seat is blocked');return}cands.sort((a,b)=>Math.hypot(a.x-phys.bx,a.z-phys.bz)-Math.hypot(b.x-phys.bx,b.z-phys.bz));
   const swoop=()=>animTo({x:it.x+f.x*.06,z:it.z+f.z*.06,y:S.eye,yaw:Math.atan2(-f.x,-f.z),pitch:S.pitch,arc:.06},1.15,()=>{phys.seated=it.id;phys.eyeY=S.eye;toast('Sitting. Press W or click the floor to stand up')});
   const st=cands[0];if(Math.hypot(st.x-phys.bx,st.z-phys.bz)<.3)swoop();else if(!pathTo(st.x,st.z,swoop,false))toast("Can't reach that seat")}
 function standUp(cb){const it=state.items.find(i=>i.id===phys.seated);phys.seated=null;if(!it){phys.eyeY=EYE;cb&&cb();return}
-  const f=seatFront(it),T=TYPES[it.t],off=Math.max(T.d/2+.38,.6);let p=[[f.x,f.z],[-f.x,-f.z],[f.z,-f.x],[-f.z,f.x]].map(([dx,dz])=>({x:it.x+dx*off,z:it.z+dz*off})).find(q=>free(q.x,q.z))||nearestFree(it.x,it.z);
+  let p=seatSpots(it).find(q=>free(q.x,q.z))||nearestFree(it.x,it.z);
   animTo({x:p.x,z:p.z,y:EYE,yaw,pitch:-.05,arc:.04},.75,()=>{phys.eyeY=EYE;cb&&cb()})}
 function walkStep(dt,now){if(phys.bx===null)syncBody();if(!NAV.grid)buildNav();
   if(phys.anim){const a=phys.anim;a.t=Math.min(1,a.t+dt/a.dur);const k=ease3(a.t);phys.bx=a.from.x+(a.to.x-a.from.x)*k;phys.bz=a.from.z+(a.to.z-a.from.z)*k;phys.eyeY=a.from.y+(a.to.y-a.from.y)*k+Math.sin(Math.PI*a.t)*(a.to.arc||0);
@@ -1211,7 +1242,7 @@ const CHANNELS=[
  {k:'youtube',n:'YouTube',u:'https://www.youtube.com/@charleszzheng',h:'@charleszzheng',stats:[['19.4K','subscribers'],['6.17M','views, 105 videos']]},
  {k:'instagram',n:'Instagram',u:'https://www.instagram.com/charleszzheng/',h:'@charleszzheng',stats:[['12.8K','followers'],['107','posts']]},
  {k:'tiktok',n:'TikTok',u:'https://www.tiktok.com/@charleszzheng',h:'@charleszzheng',stats:[['31.1K','followers'],['1.9M','likes'],['25M+','views, 86 videos']]}];
-const VIDEOS=['https://www.tiktok.com/@charleszzheng/video/7659083920889105695','https://www.tiktok.com/@charleszzheng/video/7639901350045748510','https://www.tiktok.com/@charleszzheng/video/7686168910416071966','https://www.tiktok.com/@charleszzheng/video/7670595025201286431','https://www.tiktok.com/@charleszzheng/video/7702132307871780126'];
+const VIDEOS=['https://www.tiktok.com/@charleszzheng/video/7670595025201286431','https://www.tiktok.com/@charleszzheng/video/7659083920889105695','https://www.tiktok.com/@charleszzheng/video/7639901350045748510','https://www.tiktok.com/@charleszzheng/video/7686168910416071966','https://www.tiktok.com/@charleszzheng/video/7702132307871780126'];
 const TVICON={
  tiktok:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.6 3c.4 2.3 1.9 3.9 4.2 4.1v3.1c-1.5.1-2.9-.4-4.2-1.2v6.3c0 3.6-2.7 5.9-5.8 5.9-3.4 0-5.9-2.8-5.6-6 .3-2.9 2.8-5.1 5.9-4.9v3.2c-1.3-.3-2.7.4-2.9 1.8-.2 1.4.8 2.7 2.4 2.7 1.4 0 2.4-1 2.4-2.6V3h3.6z"/></svg>',
  youtube:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M22.5 7.2a2.8 2.8 0 0 0-2-2C18.8 4.7 12 4.7 12 4.7s-6.8 0-8.5.5a2.8 2.8 0 0 0-2 2C1 8.9 1 12 1 12s0 3.1.5 4.8a2.8 2.8 0 0 0 2 2c1.7.5 8.5.5 8.5.5s6.8 0 8.5-.5a2.8 2.8 0 0 0 2-2c.5-1.7.5-4.8.5-4.8s0-3.1-.5-4.8zM9.8 15.1V8.9l5.6 3.1-5.6 3.1z"/></svg>',
@@ -1294,7 +1325,9 @@ const BEAM={grp:new THREE.Group(),dust:null,pts:[],mat:null};scene.add(BEAM.grp)
 
 // ---- bigger desk things (scaled around their base, so they stay on the desk)
 const SCALE={monitor:1.35,laptop:1.3,journal:1.45,phone:1.35};
-function applyScale(){for(const it of state.items){const k=SCALE[it.t],n=nodes[it.id];if(k&&n)n.scale.setScalar(k)}}
+// WIDE: extra stretch along the object's width (desk 1.4 m -> 1.9 m, monitor ~1.1 m wide) so the desk reads first
+const WIDE={desk:1.36,monitor:1.3};TYPES.desk.w=1.4*WIDE.desk;
+function applyScale(){for(const it of state.items){const k=SCALE[it.t],wx=WIDE[it.t],n=nodes[it.id];if(!n)continue;if(k)n.scale.setScalar(k);if(wx)n.scale.x=(k||1)*wx}if(typeof buildNav==='function')buildNav()}
 // ---- rim light for the clickable objects: their edges glow, at all times
 const RIM={uRim:{value:.5},uRimC:{value:TH?new THREE.Color(TH.acc):new THREE.Color(1,.62,.25)}};
 function addRim(m){if(!m.isMeshStandardMaterial)return;m.onBeforeCompile=sh=>{sh.uniforms.uRim=RIM.uRim;sh.uniforms.uRimC=RIM.uRimC;
@@ -1395,8 +1428,16 @@ try{document.fonts.load('500 24px "IBM Plex Mono"').then(()=>{faceDraw(clockFace
 const Q=new URLSearchParams(location.search),UI=Q.get('ui')||'tabs',WALLD=Q.get('wall')||'creator';
 const goRoom=()=>$('v-house').click(),goClassic=()=>{exitZoom();$('v-rec').click()},isClassic=()=>document.body.classList.contains('recmode');
 const busy=()=>!!zoomBack||!mon.hidden||!card.hidden;
+// ---- look by moving the mouse (no drag): small moves turn the view a little, so objects stay easy to click;
+//      near the left or right edge the view keeps turning. Off the canvas (menus, Recruiter button) nothing moves.
+const LOOK={x:null,y:null,nx:0,inside:false},lookOK=()=>mode==='walk'&&!busy()&&!phys.anim&&!isClassic();
+canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const r=canvas.getBoundingClientRect(),nx=(e.clientX-r.left)/r.width*2-1,ny=(e.clientY-r.top)/r.height*2-1;
+  if(lookOK()&&LOOK.x!==null){yaw-=(nx-LOOK.x)*.38;pitch=Math.max(-1,Math.min(.6,pitch-(ny-LOOK.y)*.24))}LOOK.x=nx;LOOK.y=ny;LOOK.nx=nx;LOOK.inside=true});
+canvas.addEventListener('pointerleave',()=>{LOOK.inside=false;LOOK.x=null});
+let lookT=performance.now();(function edgeTurn(now){const dt=Math.min(.05,(now-lookT)/1000);lookT=now;const a=Math.abs(LOOK.nx);
+  if(LOOK.inside&&a>.72&&lookOK())yaw-=Math.sign(LOOK.nx)*Math.min(1,(a-.72)/.24)*1.5*dt;requestAnimationFrame(edgeTurn)})(lookT);
 // contextual prompt: how to move, shown at the start, gone after the first step
-const prompt=document.createElement('div');prompt.className='kp';prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or click the floor to walk <span>·</span> drag to look';
+const prompt=document.createElement('div');prompt.className='kp';prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or click the floor to walk <span>·</span> move the mouse to look';
 document.querySelector('.view').appendChild(prompt);let moved=false;const hidePrompt=()=>{if(!moved){moved=true;prompt.classList.add('off')}};
 addEventListener('keydown',e=>{if('wasd'.includes(e.key.toLowerCase())||e.key.startsWith('Arrow'))hidePrompt()});setTimeout(hidePrompt,12000);
 const ui=document.createElement('div');ui.className='ms ms-'+UI;document.body.appendChild(ui);window.__ms=ui;
@@ -1405,14 +1446,14 @@ const switchMode=m=>{if(m==='classic')goClassic();else goRoom()};
 addEventListener('message',e=>{const d=e.data;if(d&&d.cm==='mode')switchMode(d.to==='classic'?'classic':'walk')});
 const paint=()=>{const c=isClassic();ui.classList.toggle('lite',c);ui.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',(b.dataset.m==='classic')===c))};
 if(UI==='tabs'){ // 1. menu tabs with shoulder keys (Destiny, Forza, Halo menus): Q  WALK  CLASSIC  E, active one underlined
-  ui.innerHTML='<kbd class="sh">Q</kbd><button data-m="walk">Walk</button><button data-m="classic">Classic</button><kbd class="sh">E</kbd>';
+  ui.innerHTML='<kbd class="sh">Q</kbd><button data-m="walk">Walk</button><button data-m="classic">Recruiter</button><kbd class="sh">E</kbd>';
   addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(e.target.closest&&e.target.closest('input,textarea'))return;if(k==='q')switchMode('walk');if(k==='e')switchMode('classic')})}
 if(UI==='prompts'){ // 2. button prompts in the corner (Zelda, Uncharted, Spider-Man): key glyph + action, nothing else
-  ui.innerHTML='<button data-m="walk"><kbd>1</kbd>Walk the room</button><button data-m="classic"><kbd>2</kbd>Classic page</button>';
+  ui.innerHTML='<button data-m="walk"><kbd>1</kbd>Walk the room</button><button data-m="classic"><kbd>2</kbd>Recruiter page</button>';
   addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('input,textarea'))return;if(e.key==='1')switchMode('walk');if(e.key==='2')switchMode('classic')})}
 if(UI==='camera'){ // 3. camera-mode icons (photo mode, first/third person switch): two icons, the active one lit, label under it
   ui.innerHTML=`<button data-m="walk" aria-label="Walk the room"><svg viewBox="0 0 24 24"><path d="M12 3l9 7v11h-6v-7H9v7H3V10z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>Walk</span></button>
-   <button data-m="classic" aria-label="Classic page"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z M9 11h7 M9 15h7 M9 7h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>Classic</span></button>`}
+   <button data-m="classic" aria-label="Recruiter page"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z M9 11h7 M9 15h7 M9 7h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>Recruiter</span></button>`}
 ui.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>switchMode(b.dataset.m));
 paint();new MutationObserver(paint).observe(document.body,{attributes:true,attributeFilter:['class']});
 
@@ -1536,14 +1577,14 @@ if(LAB){document.body.classList.add('lab-'+LAB);
   .lab-diegetic .ms-tabs{top:auto;bottom:16px;left:auto;right:20px;transform:none}
   `;document.head.appendChild(st);
   const view=document.querySelector('.view'),ht=$('hinttxt');
-  if(LAB==='quiet'){ht.textContent='Start with the monitor on the desk';prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or click the floor to walk, drag to look';
+  if(LAB==='quiet'){ht.textContent='Start with the monitor on the desk';prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or click the floor to walk, move the mouse to look';
     const c=document.createElement('div');c.className='lb clk';view.appendChild(c);
     const up=()=>{const d=now();c.innerHTML=`<b>${d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}).toLowerCase()}</b>${WXW[ENV.wx]||''}`};up();setInterval(up,1000)}
   if(LAB==='viewfinder'){ht.textContent='The monitor on the desk has my resume and contact info';prompt.innerHTML='<kbd>WASD</kbd> walk <span>/</span> drag look';
     const f=document.createElement('div');f.className='vf';f.innerHTML='<i></i><i></i><i></i><i></i>';view.appendChild(f);
     const c=document.createElement('div');c.className='lb clk';view.appendChild(c);
     const up=()=>{const d=now(),p=n=>String(n).padStart(2,'0'),fr=Math.floor((performance.now()/1000%1)*24);c.innerHTML=`<em>●</em>${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}:${p(fr)} &nbsp;${WXW[ENV.wx]||''}`};up();setInterval(up,1000/24)}
-  if(LAB==='diegetic')prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or click the floor to walk, drag to look';
+  if(LAB==='diegetic')prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or click the floor to walk, move the mouse to look';
   // the floating marker over the monitor
   const [cone,shaft,spr]=ARROW.children;
   if(LAB==='quiet'){cone.visible=shaft.visible=false;
