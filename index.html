@@ -1438,8 +1438,7 @@ let lookT=performance.now();(function edgeTurn(now){const dt=Math.min(.05,(now-l
   if(LOOK.inside&&a>.72&&lookOK())yaw-=Math.sign(LOOK.nx)*Math.min(1,(a-.72)/.24)*1.5*dt;requestAnimationFrame(edgeTurn)})(lookT);
 // contextual prompt: how to move, shown at the start, gone after the first step
 const prompt=document.createElement('div');prompt.className='kp';prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or click the floor to walk <span>·</span> move the mouse to look';
-document.querySelector('.view').appendChild(prompt);let moved=false;const hidePrompt=()=>{if(!moved){moved=true;prompt.classList.add('off')}};
-addEventListener('keydown',e=>{if('wasd'.includes(e.key.toLowerCase())||e.key.startsWith('Arrow'))hidePrompt()});setTimeout(hidePrompt,12000);
+document.querySelector('.view').appendChild(prompt);const hidePrompt=()=>{}; // the tip stays as a faint reminder (top left) for recruiters
 const ui=document.createElement('div');ui.className='ms ms-'+UI;document.body.appendChild(ui);window.__ms=ui;
 // all three: always on screen, no border, one click to switch between walking the room and the Classic page
 const switchMode=m=>{if(m==='classic')goClassic();else goRoom()};
@@ -1575,6 +1574,10 @@ if(LAB){document.body.classList.add('lab-'+LAB);
   .lab-diegetic .kp{background:none;border:0;font:400 13px "Hanken Grotesk",sans-serif;color:rgba(239,228,212,.7);text-shadow:0 1px 2px rgba(0,0,0,.8)}
   .lab-diegetic .kp kbd{font:500 11px "IBM Plex Mono",monospace;border:1px solid rgba(239,228,212,.45);border-radius:3px;padding:0 4px;margin-right:2px;background:none;color:#efe4d4}.lab-diegetic .kp span{display:none}
   .lab-diegetic .ms-tabs{top:auto;bottom:16px;left:auto;right:20px;transform:none}
+  /* controls reminder: always on, top left, faint */
+  body .view .kp{top:18px;left:20px;bottom:auto;font-size:13px;opacity:.5;max-width:calc(50vw - 130px);line-height:1.5}
+  @media (max-width:640px),(pointer:coarse){body .view .kp{display:none}}
+  body .view .kp kbd{font-size:10px}
   `;document.head.appendChild(st);
   const view=document.querySelector('.view'),ht=$('hinttxt');
   if(LAB==='quiet'){ht.textContent='Start with the monitor on the desk';prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or click the floor to walk, move the mouse to look';
