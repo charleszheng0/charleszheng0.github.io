@@ -1005,7 +1005,7 @@ if(!/[?&]code\b/.test(location.search)&&THREE.GLTFLoader){
   let ENV=null;try{if(THREE.RoomEnvironment){const pm=new THREE.PMREMGenerator(renderer);ENV=pm.fromScene(new THREE.RoomEnvironment(),.04).texture;pm.dispose()}}catch(e){}
   const loader=new THREE.GLTFLoader(),FILES=['desk_corner','living','poker','kitchen'];
   // rebuild the room once, when every model is in (a rebuild per model froze the page several times while loading)
-  let waiting=FILES.length;const arrived=()=>{if(--waiting===0){rebuildItems();if(sel)showSel()}window.__bootStep&&window.__bootStep()};
+  let waiting=FILES.length;const arrived=()=>{if(--waiting===0){rebuildItems();if(sel)showSel();if(window.warmCaps)setTimeout(warmCaps,0)}window.__bootStep&&window.__bootStep()};
   const MODELV='20261120b';  // bump when models/*.json change, so browsers do not reuse an old cached copy
   FILES.forEach(f=>loader.load('models/'+f+'.json?v='+MODELV,gl=>{
     gl.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;if(ENV){o.material.envMap=ENV;o.material.envMapIntensity=.55}
@@ -2056,10 +2056,10 @@ canvas.addEventListener('pointermove',e=>{if(mode!=='walk'||drag&&drag.moved)ret
 // ---------- bites and cutting (from the food chat: right click / F / long press bites; the board knife cuts) ----------
 // Each food mesh gets a small shader that hides what is gone: round bites (tall, so you see the layers) and the
 // far side of each cut. Back faces show through the holes, tinted to the inside colour. The same test runs in JS.
-const FOOD={burger:{c:[0,.045,0],r:.068,n:6,inside:0xf0d6a4,mix:.3,bottom:.0045},apple:{c:[0,.032,0],r:.036,n:4,inside:0xf2e3b8,mix:.85,bottom:0},
+const FOOD={burger:{c:[0,.045,0],r:.068,n:6,inside:0xf0d6a4,mix:.3,capMix:.04,bottom:.0045},apple:{c:[0,.032,0],r:.036,n:4,inside:0xf2e3b8,mix:.85,bottom:0},
   orange:{c:[0,.036,0],r:.037,n:4,inside:0xf7a640,mix:.8,bottom:0},pear:{c:[0,.045,0],r:.034,n:4,inside:0xf1ebc8,mix:.85,bottom:0},
   lemon:{c:[0,.027,0],r:.04,n:3,inside:0xf5e57a,mix:.8,bottom:0},banana:{c:[0,.03,0],r:.1,n:5,inside:0xf3ead0,mix:.85,bottom:0},
-  bread:{c:[0,.05,0],r:.13,n:7,inside:0xecd5a4,mix:.4,bottom:0},toast:{c:[0,.012,0],r:.05,n:4,inside:0xd9a466,mix:.4,bottom:0}};
+  bread:{c:[0,.05,0],r:.13,n:7,inside:0xecd5a4,mix:.4,capMix:.9,bottom:0},toast:{c:[0,.012,0],r:.05,n:4,inside:0xd9a466,mix:.4,capMix:.8,bottom:0}};
 const V4=THREE.Vector4;
 const FHEAD=`uniform mat4 uFInv;uniform vec4 uReg;uniform int uRegT;uniform float uRegS;uniform vec4 uPl[3];uniform int uNP;uniform vec4 uBt[12];uniform int uNB;uniform vec3 uIn;uniform float uInA;varying vec3 vF;
 bool fReg(vec3 p){if(uRegT==2){vec2 d=p.xz-uReg.xy;float c=cos(uReg.z),s=sin(uReg.z);float px=d.x*c-d.y*s,pz=d.x*s+d.y*c;return px>-.148&&px<.218&&pz>-.05&&pz<.005&&p.y>uReg.w;}return true;}
@@ -2109,12 +2109,82 @@ function keepP(p,q){for(const v of p.planes)if(v.x*q.x+v.y*q.y+v.z*q.z>v.w)retur
   for(const b of p.bites){const dx=q.x-b.x,dy=(q.y-b.y)*.35,dz=q.z-b.z;if(dx*dx+dy*dy+dz*dz<b.w*b.w)return false}return true}
 function syncU(p){const U=p.U;U.uNP.value=p.planes.length;p.planes.forEach((q,i)=>U.uPl.value[i].copy(q));const bs=p.bites.slice(-12);U.uNB.value=bs.length;bs.forEach((b,i)=>U.uBt.value[i].copy(b));U.uIn.value.set(p.F.inside);U.uInA.value=p.F.mix}
 PICK.forEach(p=>{p.F=FOOD[p.id];p.planes=[];p.bites=[];p.left=p.F.n;p.c=new V3(...p.F.c);p.depth=0});
+// ---- solid cut faces: real cap geometry. For every cut plane, each food mesh is sliced: the triangles that cross the
+//      plane give segments, the segments join into outlines, and each outline is filled with a flat polygon just
+//      inside the cut. Each layer is coloured from its own texture along its edge (mixed toward the food's flesh
+//      colour), and smaller outlines sit nearer the cut, so lettuce, cheese and patty show as stripes over the bun.
+//      Caps go through the same clipping as the food, so later cuts and bites cut the caps too.
+const CAPTX=new WeakMap(),CAPG=new Map(),CAPM=[];
+// compile the cut-face shader while the loading screen is up, so the first cut does not freeze the room for ~0.5 s
+window.warmCaps=()=>{try{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,.001,0,0,0,.001,0],3));
+  g.setAttribute('normal',new THREE.Float32BufferAttribute([0,0,1,0,0,1,0,0,1],3));g.setAttribute('color',new THREE.Float32BufferAttribute([1,1,1,1,1,1,1,1,1],3));
+  const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.8,metalness:0,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2}));
+  m.position.set(0,-50,0);patchGroup(m,mkU(),m);scene.add(m);renderer.compile(scene,persp);scene.remove(m);g.dispose()}catch(e){}};
+function capTex(t){if(!t||!t.image||!t.image.width)return null;let c=CAPTX.get(t.image);if(c!==undefined)return c;c=null;
+  try{const N=64,cv=document.createElement('canvas');cv.width=cv.height=N;const g=cv.getContext('2d');g.drawImage(t.image,0,0,N,N);c={N,d:g.getImageData(0,0,N,N).data,flip:t.flipY}}catch(e){c=null}
+  CAPTX.set(t.image,c);return c}
+const s2l=v=>v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);
+function capColour(m,u,v,out){out.copy(m.color||out.set(0xffffff));const T=capTex(m.map);if(T&&u!=null){u=u-Math.floor(u);v=v-Math.floor(v);
+  const x=Math.min(T.N-1,Math.floor(u*T.N)),y=Math.min(T.N-1,Math.floor((T.flip?1-v:v)*T.N)),i=(y*T.N+x)*4;
+  out.r*=s2l(T.d[i]/255);out.g*=s2l(T.d[i+1]/255);out.b*=s2l(T.d[i+2]/255)}return out}
+// slice one mesh (positions already in food space) with plane n.x<=w; returns closed outlines [{pts:[V3],uv:[[u,v]],mat}]
+// vertices that share a position share one id (geometry seams duplicate them); worked out once per geometry
+const WELD=new WeakMap();
+function weld(g){let W=WELD.get(g);if(W)return W;const pos=g.attributes.position,id=new Int32Array(pos.count),m=new Map(),q=v=>Math.round(v*1e5);let n=0;
+  for(let i=0;i<pos.count;i++){const k=q(pos.getX(i))+','+q(pos.getY(i))+','+q(pos.getZ(i));let j=m.get(k);if(j===undefined){j=n++;m.set(k,j)}id[i]=j}
+  W={id,n};WELD.set(g,W);return W}
+// slice one mesh (M: mesh -> food space) with the plane n.x<=w; returns closed outlines [{pts:[V3],uv:[[u,v]],mat}]
+function sliceMesh(mesh,M,n,w){const g=mesh.geometry,pos=g.attributes.position,uva=g.attributes.uv,idx=g.index;if(!pos)return[];
+  if(!g.boundingSphere)g.computeBoundingSphere();const bs=g.boundingSphere.clone().applyMatrix4(M);if(Math.abs(n.dot(bs.center)-w)>bs.radius)return[];
+  const W=weld(g),e=M.elements,cnt=pos.count,X=new Float32Array(cnt*3),D=new Float32Array(cnt);
+  for(let i=0;i<cnt;i++){const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i),wx=e[0]*x+e[4]*y+e[8]*z+e[12],wy=e[1]*x+e[5]*y+e[9]*z+e[13],wz=e[2]*x+e[6]*y+e[10]*z+e[14];
+    X[i*3]=wx;X[i*3+1]=wy;X[i*3+2]=wz;D[i]=n.x*wx+n.y*wy+n.z*wz-w+1.3e-7}
+  const mats=Array.isArray(mesh.material)?mesh.material:[mesh.material],groups=g.groups&&g.groups.length?g.groups:null;
+  const triMat=t=>{if(!groups)return mats[0];for(const gr of groups)if(t*3>=gr.start&&t*3<gr.start+gr.count)return mats[gr.materialIndex]||mats[0];return mats[0]};
+  const nT=(idx?idx.count:cnt)/3,at=new Map(),segs=[],N=W.n;
+  const cross=(i,j)=>{const a=W.id[i],b=W.id[j],k=a<b?a*N+b:b*N+a;if(!at.has(k)){const t=D[i]/(D[i]-D[j]);
+      at.set(k,{p:new V3(X[i*3]+(X[j*3]-X[i*3])*t,X[i*3+1]+(X[j*3+1]-X[i*3+1])*t,X[i*3+2]+(X[j*3+2]-X[i*3+2])*t),uv:uva?[uva.getX(i)+(uva.getX(j)-uva.getX(i))*t,uva.getY(i)+(uva.getY(j)-uva.getY(i))*t]:null})}return k};
+  for(let t=0;t<nT;t++){const a=idx?idx.getX(t*3):t*3,b=idx?idx.getX(t*3+1):t*3+1,c=idx?idx.getX(t*3+2):t*3+2;
+    const sa=D[a]<0,sb=D[b]<0,sc=D[c]<0;if(sa===sb&&sb===sc)continue;const ed=[];
+    if(sa!==sb)ed.push(cross(a,b));if(sb!==sc)ed.push(cross(b,c));if(sc!==sa)ed.push(cross(c,a));
+    if(ed.length===2&&ed[0]!==ed[1])segs.push([ed[0],ed[1],triMat(t)])}
+  const by=new Map();segs.forEach((sg,i)=>{for(let h=0;h<2;h++){const k=sg[h];const l=by.get(k);if(l)l.push(i);else by.set(k,[i])}});
+  const used=new Uint8Array(segs.length),loops=[];
+  for(let s0=0;s0<segs.length;s0++){if(used[s0])continue;used[s0]=1;const keys=[segs[s0][0]];let cur=segs[s0][1],mat=segs[s0][2];
+    for(let guard=0;guard<segs.length&&cur!==keys[0];guard++){keys.push(cur);const nx=(by.get(cur)||[]).find(i=>!used[i]);if(nx==null)break;used[nx]=1;cur=segs[nx][0]===cur?segs[nx][1]:segs[nx][0]}
+    if(keys.length>=3&&cur===keys[0])loops.push({pts:keys.map(k=>at.get(k).p),uv:keys.map(k=>at.get(k).uv),mat})}  // open sheets (lettuce) have no inside to fill
+  return loops}
+function addCaps(p,meshes){if(!p.planes.length)return;const key=(p.root||p.id)+'|'+p.planes.map(v=>v.toArray().map(x=>x.toFixed(4)).join(',')).join(';');
+  let parts=CAPG.get(key);
+  if(!parts){parts=[];p.obj.updateMatrixWorld(true);const inv=p.obj.matrixWorld.clone().invert();
+    const inside=new THREE.Color(p.F.inside),mixA=p.F.capMix!=null?p.F.capMix:p.F.mix,col=new THREE.Color();
+    for(const pl of p.planes){const n=new V3(pl.x,pl.y,pl.z).normalize(),w=pl.w,e1=new V3(),e2=new V3();
+      e1.set(Math.abs(n.y)<.9?0:1,Math.abs(n.y)<.9?1:0,0).cross(n).normalize();e2.crossVectors(n,e1);
+      const all=[];
+      for(const m of meshes){const mm=Array.isArray(m.material)?m.material:[m.material];if(mm.every(x=>x.transparent))continue;
+        const M=inv.clone().multiply(m.matrixWorld);for(const L of sliceMesh(m,M,n,w)){
+          const c2=L.pts.map(v=>new THREE.Vector2(v.dot(e1),v.dot(e2)));let A=0;for(let i=0;i<c2.length;i++){const a=c2[i],b=c2[(i+1)%c2.length];A+=a.x*b.y-b.x*a.y}
+          if(Math.abs(A)>2e-7)all.push(Object.assign(L,{c2,area:Math.abs(A)/2}))}}
+      // draw order where layers overlap: fillings over crumb over bun, then smaller over larger
+      const pri=L=>{const nm=L.mat.name||'';return /tomato|cheese|lettuce|onion|pickle/i.test(nm)?3:/patty|meat/i.test(nm)?2:/crumb/i.test(nm)?1:/bun|bread|crust/i.test(nm)?0:1};
+      all.sort((a,b)=>pri(a)-pri(b)||b.area-a.area);
+      all.forEach((L,rank)=>{let tris;try{tris=THREE.ShapeUtils.triangulateShape(L.c2,[])}catch(e){return}if(!tris.length)return;
+        const depth=.00012,pos=[],cols=[],nor=[];  // on the cut itself: a deeper cap lets inner surfaces show in front of it as lines
+        let ar=0,ag=0,ab=0;L.pts.forEach((v,i)=>{capColour(L.mat,L.uv[i]&&L.uv[i][0],L.uv[i]&&L.uv[i][1],col);ar+=col.r;ag+=col.g;ab+=col.b});
+        col.setRGB(ar/L.pts.length,ag/L.pts.length,ab/L.pts.length).lerp(inside,/bun|bread|crust|toast/i.test(L.mat.name||'')?Math.max(mixA,.8):mixA);const flat=[col.r,col.g,col.b],vc=L.pts.map(()=>flat);  // a cut bun is pale crumb, not crust
+        for(const t of tris)for(const i of t){const v=L.pts[i];pos.push(v.x-n.x*depth,v.y-n.y*depth,v.z-n.z*depth);cols.push(...vc[i]);nor.push(n.x,n.y,n.z)}
+        const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));
+        g.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));g.userData.layer=L.mat.name||'';g.userData.rank=rank;parts.push(g)})}
+    if(CAPG.size>60)CAPG.clear();CAPG.set(key,parts)}
+  // layer order on the same plane comes from a depth offset per rank (later = drawn over), not from real distance
+  for(const g of parts){const r=g.userData.rank||0,mat=CAPM[r]||(CAPM[r]=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.8,metalness:0,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2-2*r}));
+    const c=new THREE.Mesh(g,mat);c.castShadow=false;c.receiveShadow=false;c.userData.cap=g.userData.layer||true;c.userData.k='pick:'+p.id;p.obj.add(c);meshes.push(c)}}
 // the burger's plate stays where the burger lives; the burger you carry has no plate
 let PLATE=null;
 const isPlate=o=>/plate/i.test((o.material&&o.material.name)||'')||o.userData.plate;
 buildPicks=(orig=>function(){orig();
   for(const p of PICK){if(!p.obj)continue;p.U=p.U||mkU();p.obj.traverse(o=>{if(o.isMesh&&(p.id==='burger'||p.root==='burger')&&isPlate(o))o.visible=false});
-    const keepMeshes=[];p.obj.traverse(o=>{if(o.isMesh&&o.visible)keepMeshes.push(o)});keepMeshes.forEach(o=>patchGroup(o,p.U,p.obj));syncU(p);p.obj.traverse(o=>{o.userData.foodP=p})}
+    const keepMeshes=[];p.obj.traverse(o=>{if(o.isMesh&&o.visible)keepMeshes.push(o)});try{addCaps(p,keepMeshes)}catch(e){console.warn('cut face',e)}keepMeshes.forEach(o=>patchGroup(o,p.U,p.obj));syncU(p);p.obj.traverse(o=>{o.userData.foodP=p})}
   if(PLATE)KG.remove(PLATE);PLATE=new THREE.Group();TYPES.burger.b(PLATE);let any=false;PLATE.traverse(o=>{if(o.isMesh){if(isPlate(o))any=true;else o.visible=false}});
   if(!any){PLATE=null;return}const h=PBY.burger.home;PLATE.position.set(h[1],h[2],h[3]);keep(PLATE);KG.add(PLATE)})(buildPicks);
 // the board and its knife (the baked knife is cut out of the board and drawn again on its own, so it can move)
