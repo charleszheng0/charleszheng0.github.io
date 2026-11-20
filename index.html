@@ -358,7 +358,7 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 // ---------------- renderer / scene ----------------
 const canvas=$('c');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
 renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -495,7 +495,7 @@ const CAT=[
     const fab=new THREE.Mesh(new THREE.PlaneGeometry(1.46,1),new THREE.MeshPhongMaterial({color:0xd8cbb8,transparent:true,opacity:.92,side:THREE.DoubleSide,shininess:5}));fab.geometry.translate(0,-.5,0);fab.position.set(0,-.02,.05);fab.scale.y=.32;g.add(fab);
     const bar=C(g,.012,.012,1.48,PH(0xbfc3c8,90),0,0,.05,10);bar.rotation.z=Math.PI/2;bar.position.y=-.34;g.userData.blind={fab,bar,target:.32};animated.push(g)}},
   {t:'downlight',n:'Round downlight',w:.3,d:.3,kind:'ceil',c:0xffffff,light:true,tag:'light',b:g=>{C(g,.15,.15,.03,PH(0xc9ccd0,100),0,-.03,0,24);const d=C(g,.12,.12,.005,new THREE.MeshBasicMaterial({color:0xfffbf0}),0,-.035,0,24);d.userData.lamp=true;const l=new THREE.PointLight(0xfff2de,.6,7,1.5);l.position.set(0,-.3,0);g.add(l)}},
-  {t:'sofa',n:'Charcoal sofa',w:1.9,d:.9,kind:'floor',c:0x3c3f4a,b:g=>{const F=new THREE.MeshLambertMaterial({color:0x272a33}),Fd=new THREE.MeshLambertMaterial({color:0x202229});B(g,1.9,.3,.9,Fd,0,.08,0);B(g,1.54,.14,.66,F,-.0,.38,.08);B(g,.18,.56,.9,F,-.86,.08,0);B(g,.18,.56,.9,F,.86,.08,0);[-.52,0,.52].forEach(x=>B(g,.5,.42,.18,F,x,.38,-.33));[[-.86,-.38],[.86,-.38],[-.86,.38],[.86,.38]].forEach(([x,z])=>B(g,.05,.08,.05,0x111114,x,0,z))}},
+  {t:'sofa',n:'Charcoal sofa',w:1.58,d:.9,kind:'floor',c:0x3c3f4a,b:g=>{const F=new THREE.MeshLambertMaterial({color:0x272a33}),Fd=new THREE.MeshLambertMaterial({color:0x202229});B(g,1.58,.3,.9,Fd,0,.08,0);B(g,1.22,.14,.66,F,-.0,.38,.08);B(g,.18,.56,.9,F,-.7,.08,0);B(g,.18,.56,.9,F,.7,.08,0);[-.31,.31].forEach(x=>B(g,.6,.42,.18,F,x,.38,-.33));[[-.7,-.38],[.7,-.38],[-.7,.38],[.7,.38]].forEach(([x,z])=>B(g,.05,.08,.05,0x111114,x,0,z))}},
   {t:'sofaOld',n:'Tan leather sofa',w:1.7,d:.85,kind:'floor',c:0xc49a6a,b:g=>{const L=PH(0xc49a6a,35),Ld=PH(0xb58a5c,35);B(g,1.7,.36,.85,Ld,0,.06,0);B(g,1.7,.5,.2,L,0,.36,-.32);B(g,.18,.62,.85,L,-.76,.06,0);B(g,.18,.62,.85,L,.76,.06,0);B(g,.67,.14,.62,L,-.34,.42,.08);B(g,.67,.14,.62,L,.34,.42,.08);[[-.75,-.35],[.75,-.35],[-.75,.35],[.75,.35]].forEach(([x,z])=>C(g,.025,.02,.06,0x2a2a2a,x,0,z))}},
   {t:'spiky',n:'Spiky plant',w:.5,d:.5,kind:'floor',c:0x5a8a3a,b:g=>{C(g,.15,.12,.3,PH(0x8a8d90,60),0,0,0);C(g,.14,.14,.02,0x3a2a1a,0,.29,0);
     for(let i=0;i<14;i++){const a=i/14*Math.PI*2+(i%2)*.2,len=.45+((i*37)%10)/30,l=new THREE.Mesh(new THREE.BoxGeometry(.045,len,.008),PH(i%3?0x4f7a34:0x7a8a2e,25));l.geometry.translate(0,len/2,0);l.position.set(0,.3,0);l.rotation.set(0,a,0);l.rotateX(.35+(i%4)*.12);l.castShadow=true;g.add(l)}}},
@@ -861,7 +861,7 @@ canvas.addEventListener('contextmenu',e=>{if(mode==='plan')e.preventDefault()});
 canvas.addEventListener('pointerdown',e=>{
   if(mode==='orbit'){drag={x:e.clientX,y:e.clientY,orbitClick:true};return}
   canvas.setPointerCapture(e.pointerId);
-  if(mode==='walk'){drag={x:e.clientX,y:e.clientY,lx:e.clientX,ly:e.clientY,moved:false,walk:true};return}
+  if(mode==='walk'){drag={x:e.clientX,y:e.clientY,lx:e.clientX,ly:e.clientY,moved:false,walk:true,d:camDir(e)};return}
   const p=ground(e);if(!p)return;
   if(e.button===2||e.button===1){drag={pan:true,x:e.clientX,y:e.clientY,cx:plan.cx,cz:plan.cz};return}
   if(tool==='place'){const T=TYPES[placing];snapshot();let x=snap(p.x,.05),z=snap(p.z,.05),ry=ghostRy;
@@ -875,6 +875,17 @@ canvas.addEventListener('pointerdown',e=>{
   const w=nearWall(p);if(w){sel={type:'wall',id:w.id};showSel();refreshProps();return}
   sel=null;showSel();refreshProps();drag={pan:true,x:e.clientX,y:e.clientY,cx:plan.cx,cz:plan.cz};
 });
+// ---- drag to look: the point you grab stays under the cursor
+// camera-space direction under a screen point (no roll or head bob: the same yaw/pitch model that grabLook solves)
+function camRay(e){const r=canvas.getBoundingClientRect(),t=Math.tan(persp.fov*Math.PI/360);return[((e.clientX-r.left)/r.width*2-1)*t*persp.aspect,-((e.clientY-r.top)/r.height*2-1)*t,-1]}
+function camDir(e){const[cx,cy,cz]=camRay(e),cp=Math.cos(pitch),sp=Math.sin(pitch),y=cy*cp-cz*sp,z1=cy*sp+cz*cp,cw=Math.cos(yaw),sw=Math.sin(yaw);
+  const x=cx*cw+z1*sw,z=-cx*sw+z1*cw,l=Math.hypot(x,y,z);return[x/l,y/l,z/l]}
+// solve yaw and pitch so the world direction grabbed at pointerdown sits exactly under the cursor again
+function grabLook(dr,e){const d=dr.d;if(!d)return;const[cx,cy,cz]=camRay(e),L=Math.hypot(cx,cy,cz),c=[cx/L,cy/L,cz/L];
+  const rr=Math.hypot(c[1],c[2]),ph=Math.atan2(c[2],c[1]),a=Math.acos(Math.max(-1,Math.min(1,d[1]/rr)));
+  const p1=a-ph,p2=-a-ph,w=v=>Math.atan2(Math.sin(v),Math.cos(v));let p=Math.abs(w(p1-pitch))<Math.abs(w(p2-pitch))?w(p1):w(p2);
+  p=Math.max(-1.3,Math.min(1.2,p));const vx=c[0],vz=c[1]*Math.sin(p)+c[2]*Math.cos(p);
+  pitch=p;yaw=Math.atan2(d[0],d[2])-Math.atan2(vx,vz)}
 function nearWall(p){let best=null;for(const w of state.walls){const r=segDist(p.x,p.z,w);if(r.d<.18&&(!best||r.d<best.d))best={d:r.d,w}}return best&&best.w}
 canvas.addEventListener('pointermove',e=>{
   if(mode==='walk'&&!drag){const it=hitItem(e);const hv=$('hover');if(it&&(it.tag||SEATS[it.t])){const r=canvas.getBoundingClientRect();hv.textContent=SEATS[it.t]?'Sit down':TAGS[it.tag];hv.style.left=(e.clientX-r.left+14)+'px';hv.style.top=(e.clientY-r.top+14)+'px';hv.hidden=false;canvas.style.cursor='pointer'}else{hv.hidden=true;canvas.style.cursor='grab'}}
@@ -882,7 +893,7 @@ canvas.addEventListener('pointermove',e=>{
   if(mode==='plan'&&ghost&&p&&!drag){const T=TYPES[placing];let x=snap(p.x,.05),z=snap(p.z,.05),ry=ghostRy,y=0;
     if(T.kind==='wall'){const ws=wallSnap(p.x,p.z);if(ws){x=ws.x;z=ws.z;ry=ws.ry}y=T.y||1.5}else if(T.kind==='top')y=surfaceAt(x,z);else if(T.kind==='ceil')y=H;ghost.position.set(x,y,z);ghost.rotation.y=ry}
   if(!drag)return;
-  if(drag.walk){const dx=e.clientX-drag.lx,dy=e.clientY-drag.ly;drag.lx=e.clientX;drag.ly=e.clientY;if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>5)drag.moved=true;if(drag.moved&&lookOK()){canvas.style.cursor='grabbing';$('hover').hidden=true;const k=2*Math.tan(persp.fov*Math.PI/360)/Math.max(1,canvas.clientHeight)*(INV.on?-1:1);yaw+=dx*k;pitch=Math.max(-1.3,Math.min(1.2,pitch+dy*k));persp.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'))}return}
+  if(drag.walk){const dx=e.clientX-drag.lx,dy=e.clientY-drag.ly;drag.lx=e.clientX;drag.ly=e.clientY;if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>5)drag.moved=true;if(drag.moved&&lookOK()){canvas.style.cursor='grabbing';$('hover').hidden=true;if(INV.on){const k=-2*Math.tan(persp.fov*Math.PI/360)/Math.max(1,canvas.clientHeight);yaw+=dx*k;pitch=Math.max(-1.3,Math.min(1.2,pitch+dy*k))}else grabLook(drag,e);persp.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'))}return}
   if(drag.pan){plan.cx=drag.cx-(e.clientX-drag.x)/plan.zoom;plan.cz=drag.cz-(e.clientY-drag.y)/plan.zoom;updateOrtho();return}
   if(drag.wall&&p){let x2=snap(p.x,.5),z2=snap(p.z,.5);if(Math.abs(x2-drag.x1)>Math.abs(z2-drag.z1)*2.5)z2=drag.z1;else if(Math.abs(z2-drag.z1)>Math.abs(x2-drag.x1)*2.5)x2=drag.x1;drag.x2=x2;drag.z2=z2;
     preview.geometry.setFromPoints([new THREE.Vector3(drag.x1,.05,drag.z1),new THREE.Vector3(x2,.05,z2)]);const L=Math.hypot(x2-drag.x1,z2-drag.z1)||.01;previewBox.scale.set(L,1,1);previewBox.position.set((drag.x1+x2)/2,H/2,(drag.z1+z2)/2);previewBox.rotation.y=-Math.atan2(z2-drag.z1,x2-drag.x1);return}
@@ -947,10 +958,10 @@ function starter(){const s={v:1,style:17,walls:[],items:[],next:1};const W=(x1,z
   const I=(t,x,z,ry=0,ex={})=>s.items.push(Object.assign({id:s.next++,t,x,z,ry,tag:TYPES[t].tag||''},ex));
   I('snakeplant',1.3,4.62);I('pokertable',1.6,3.5,Math.PI/2);I('blackstool',2.12,3.15,-Math.PI/2);I('blackstool',2.12,3.85,-Math.PI/2);
   I('desk',2.6,.5);I('officechair',2.6,1.22,Math.PI);I('monitor',2.6,.3);I('laptop',1.83,.5,.3);I('keyboard',2.6,.7);I('journal',3.35,.5,.15);I('phone',3.33,.8,-.3);I('desklamp',3.45,.15,-Math.PI/2);
-  I('sofa',4.1,1.6,Math.PI/2);I('coffeetable',4.85,1.6,Math.PI/2);I('succulent',4.85,1.5);I('tvconsole',6.19,1.28,-Math.PI/2);I('flattv',6.395,1.28,-Math.PI/2);I('clock',5.2,.105);I('leafplant',6.1,.42);I('blinds',3.25,.065);I('curtain',2.32,.065);I('curtain',4.18,.065);I('ceilfan',4.7,1.6);
+  I('sofa',4.1,1.44,Math.PI/2);I('coffeetable',4.85,1.44,Math.PI/2);I('succulent',4.85,1.34);I('tvconsole',6.19,1.28,-Math.PI/2);I('flattv',6.395,1.28,-Math.PI/2);I('clock',5.2,.105);I('leafplant',6.1,.42);I('blinds',3.25,.065);I('curtain',2.32,.065);I('curtain',4.18,.065);I('ceilfan',4.7,1.6);
   // kitchen: spices like the reference photo, one small light on a tripod
   I('fridge',6.08,4.55,-Math.PI/2);I('pans',6.1,4.55,-Math.PI/2);I('stove',6.1,3.78,-Math.PI/2);I('pot',5.95,3.97);I('sink',6.14,2.75,-Math.PI/2);I('spices',6.3,2.57,-Math.PI/2);I('toaster',6.33,2.32,-Math.PI/2);I('backsplash',6.435,3.2,-Math.PI/2);I('knifebar',6.435,2.35,-Math.PI/2);I('uppercab',6.435,2.6,-Math.PI/2);I('uppercabopen',6.435,3.5,-Math.PI/2);
-  I('peninsula',4.6,3.95);I('board',4.72,4.0,.08);I('dji',5.1,3.78,-.6);I('led',5.24,4.1,-.9);I('barstool',4.3,3.42);I('barstool',4.9,3.42);I('pendant',4.3,3.95);I('pendant',4.95,3.95);
+  I('peninsula',4.15,3.95);I('board',4.27,4.0,.08);I('dji',4.65,3.78,-.6);I('led',4.79,4.1,-.9);I('barstool',3.85,3.42);I('barstool',4.45,3.42);I('pendant',3.85,3.95);I('pendant',4.5,3.95);
   I('downlight',2.6,1.5);
   return s}
 // macros sits on the fridge door: mount it on the fridge face
@@ -1102,7 +1113,20 @@ function setShading(m){shading=m;['wire','solid','render'].forEach(k=>$('sh-'+k)
   grid.material.opacity=m==='render'?.12:.28;refreshHelpers();showSel()}
 window.__shReady=true;setShading(window.__urlShading||shading);
 $('sh-wire').onclick=()=>setShading('wire');$('sh-solid').onclick=()=>setShading('solid');$('sh-render').onclick=()=>setShading('render');
-function draw(){if(shading==='render'){renderer.render(scene,cam);return}
+// ---- speed: the sun's shadow map (about 500 casters) is redrawn only while something can move (an input in the last
+//      2.5 s, food in hand, or the room editor) and once a second otherwise (the sun follows the clock). Walking and
+//      dragging to look move no shadow casters, so they do not count. If frames run slow, the render size steps down.
+const PERF={shT:-1e9,hot:0,pr:renderer.getPixelRatio(),acc:0,n:0,from:performance.now()+4000};renderer.shadowMap.autoUpdate=false;
+let isHeld=()=>false;
+const MOVEKEYS=new Set(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','shift']);
+addEventListener('keydown',e=>{if(!MOVEKEYS.has((e.key||'').toLowerCase()))PERF.hot=performance.now()+2500},true);
+addEventListener('pointerup',()=>{PERF.hot=performance.now()+2500},true);
+addEventListener('click',()=>{PERF.hot=performance.now()+2500},true);
+function perfTick(now){if(mode!=='walk'||now<PERF.hot||isHeld()||now-PERF.shT>1000){renderer.shadowMap.needsUpdate=true;PERF.shT=now}
+  if(now<PERF.from||document.hidden)return;const dt=now-(PERF.prev||now);PERF.prev=now;if(dt<=0||dt>100)return;PERF.acc+=dt;PERF.n++;
+  if(PERF.n<90)return;const avg=PERF.acc/PERF.n;PERF.acc=PERF.n=0;
+  if(avg>21&&PERF.pr>1){PERF.pr=Math.max(1,PERF.pr-.25);renderer.setPixelRatio(PERF.pr);resize();PERF.from=now+1500;PERF.prev=0}}
+function draw(){perfTick(performance.now());if(shading==='render'){renderer.render(scene,cam);return}
   const bg=scene.background,fog=scene.fog;scene.background=new THREE.Color(shading==='wire'?0x393939:0x3d3d3d);scene.fog=null;
   if(shading==='solid'){scene.overrideMaterial=clayMat;renderer.render(scene,cam);renderer.autoClear=false;scene.background=null;scene.overrideMaterial=wireMat;renderer.render(scene,cam);renderer.autoClear=true}
   else{scene.overrideMaterial=wireOnly;renderer.render(scene,cam)}
@@ -1504,38 +1528,16 @@ try{document.fonts.load('500 24px "IBM Plex Mono"').then(()=>{faceDraw(clockFace
 const Q=new URLSearchParams(location.search),UI=Q.get('ui')||'tabs',WALLD=Q.get('wall')||'creator';
 const goRoom=()=>$('v-house').click(),goClassic=()=>{exitZoom();$('v-rec').click()},isClassic=()=>document.body.classList.contains('recmode');
 const busy=()=>!!zoomBack||!mon.hidden||!card.hidden;
-// ---- look by moving the mouse (no drag): small moves turn the view a little, so objects stay easy to click;
-//      near the left or right edge the view keeps turning. Off the canvas (menus, Recruiter button) nothing moves.
-const PL={on:false,fail:true,eat:false};  // pointer lock is off: drag to look // pointer lock state (see "game-style look" below)
-const LOOK={x:null,y:null,nx:0,inside:false},lookOK=()=>mode==='walk'&&!busy()&&!phys.anim&&!isClassic();
-canvas.addEventListener('pointermove',e=>{if(true)return;const r=canvas.getBoundingClientRect(),nx=(e.clientX-r.left)/r.width*2-1,ny=(e.clientY-r.top)/r.height*2-1;
-  if(lookOK()&&LOOK.x!==null){yaw-=(nx-LOOK.x)*.38;pitch=Math.max(-1,Math.min(.6,pitch-(ny-LOOK.y)*.24))}LOOK.x=nx;LOOK.y=ny;LOOK.nx=nx;LOOK.inside=true});
-canvas.addEventListener('pointerleave',()=>{LOOK.inside=false;LOOK.x=null});
-let lookT=performance.now();(function edgeTurn(now){const dt=Math.min(.05,(now-lookT)/1000);lookT=now;const a=Math.abs(LOOK.nx);
-  if(false)yaw-=Math.sign(LOOK.nx)*Math.min(1,(a-.72)/.24)*1.5*dt;requestAnimationFrame(edgeTurn)})(lookT);
+const PL={on:false};  // no pointer lock: drag to look
+const lookOK=()=>mode==='walk'&&!busy()&&!phys.anim&&!isClassic();
 // contextual prompt: how to move, shown at the start, gone after the first step
 const prompt=document.createElement('div');prompt.className='kp';prompt.innerHTML='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to walk, drag to look';
 document.querySelector('.view').appendChild(prompt);const hidePrompt=()=>{}; // the tip stays as a faint reminder (top left) for recruiters
-// ---- game-style look: click the room once and the cursor locks to the centre crosshair; moving the mouse turns the view.
-//      Esc frees the cursor. Panels, zoom views and the Recruiter page free it too. If the browser has no pointer lock,
-//      the old look (move the mouse, edge of screen turns) is used instead.
-const XH=document.createElement('div');XH.className='xh';XH.hidden=true;document.querySelector('.view').appendChild(XH);
-const tipLook=()=>{const w='<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to walk, ';
-  prompt.innerHTML=w+'drag to look'};tipLook();
-document.addEventListener('pointerlockchange',()=>{PL.on=document.pointerLockElement===canvas;XH.hidden=!PL.on;if(!PL.on)$('hover').hidden=true;tipLook()});
-document.addEventListener('pointerlockerror',()=>{PL.fail=true;PL.on=false;XH.hidden=true;tipLook()});
-// while locked, every pointer event reads as the centre of the canvas: clicks, hover labels and hit tests all use the crosshair
-const plCentre=e=>{if(!PL.on)return;const r=canvas.getBoundingClientRect();Object.defineProperty(e,'clientX',{value:r.left+r.width/2});Object.defineProperty(e,'clientY',{value:r.top+r.height/2})};
-['pointermove','pointerdown','pointerup','click','contextmenu'].forEach(t=>addEventListener(t,plCentre,true));
-// the first click only locks the cursor; it does not also walk or open something
-addEventListener('pointerdown',e=>{if(e.target!==canvas||PL.on||PL.fail||e.pointerType!=='mouse'||e.button!==0||!lookOK())return;e.stopImmediatePropagation();PL.eat=true;
-  try{const p=canvas.requestPointerLock();if(p&&p.catch)p.catch(()=>{PL.fail=true;tipLook()})}catch(_){PL.fail=true;tipLook()}},true);
-addEventListener('pointerup',e=>{if(PL.eat){PL.eat=false;e.stopImmediatePropagation()}},true);
-canvas.addEventListener('pointermove',e=>{if(!PL.on||!lookOK())return;yaw-=e.movementX*.0024;pitch=Math.max(-1,Math.min(.6,pitch-e.movementY*.0024))});
-(function plWatch(){if(PL.on&&(mode!=='walk'||busy()||isClassic()))document.exitPointerLock();XH.classList.toggle('on',PL.on&&!$('hover').hidden);requestAnimationFrame(plWatch)})();
+const tipLook=()=>{};
 // one type style for every line on the room: same as the controls tip (Hanken Grotesk, cream, soft shadow, keys in Plex Mono)
 {const st=document.createElement('style');st.textContent=`
-.xh{position:absolute;left:50%;top:50%;width:16px;height:16px;transform:translate(-50%,-50%);pointer-events:none;z-index:7}
+.xh{position:absolute;left:50%;top:50%;width:16px;height:16px;transform:translate(-8px,-8px);pointer-events:none;z-index:7}
+#cross{display:none!important}
 .xh::before,.xh::after{content:'';position:absolute;background:#fff6e8;box-shadow:0 0 0 1px rgba(0,0,0,.45);border-radius:1px}
 .xh::before{left:7px;top:0;width:2px;height:16px}.xh::after{left:0;top:7px;width:16px;height:2px}.xh.on::before,.xh.on::after{background:${ACC}}
 .view .hover{font:500 15px "Hanken Grotesk",sans-serif;color:#fff6e8;background:none;border:0;padding:0;box-shadow:none;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 14px rgba(0,0,0,.6)}
@@ -1607,7 +1609,7 @@ TYPES.serverrack={t:'serverrack',n:'Small server rack',w:.5,d:.5,kind:'floor',c:
 const GLOWT=tx2(64,256,(x)=>{const g=x.createLinearGradient(0,0,64,0);g.addColorStop(0,'rgba(255,190,120,0)');g.addColorStop(.5,'rgba(255,200,140,1)');g.addColorStop(1,'rgba(255,190,120,0)');x.fillStyle=g;x.fillRect(0,0,64,256);
   const v=x.createLinearGradient(0,0,0,256);v.addColorStop(0,'rgba(0,0,0,.35)');v.addColorStop(.12,'rgba(0,0,0,0)');v.addColorStop(.88,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.35)');x.globalCompositeOperation='destination-out';x.fillStyle=v;x.fillRect(0,0,64,256)});
 const SLATMAT=new THREE.MeshPhongMaterial({map:WOODTEX,color:TH?TH.slat:0x6e4a30,shininess:14,specular:0x221a12});
-function slatWall(w,h,strips,lights=true){return g=>{const pitch=.045,sw=.028,sd=.026,n=Math.floor((w-.02)/pitch);
+function slatWall(w,h,strips,lights=false){return g=>{const pitch=.045,sw=.028,sd=.026,n=Math.floor((w-.02)/pitch);
   B(g,w,h,.012,new THREE.MeshLambertMaterial({color:TH?TH.felt:0x17120e}),0,-h/2,.006);                      // dark felt backing
   const geo=new THREE.BoxGeometry(sw,h,sd),im=new THREE.InstancedMesh(geo,SLATMAT,n),m=new THREE.Matrix4(),x0=-(n-1)*pitch/2;
   const gaps=strips.map(f=>Math.round(f*(n-1)));
@@ -1617,6 +1619,7 @@ function slatWall(w,h,strips,lights=true){return g=>{const pitch=.045,sw=.028,sd
     B(g,.012,h-.02,.012,new THREE.MeshBasicMaterial({color:TH?TH.led:0xffd9a8,toneMapped:false}),x,-h/2+.01,.018);                  // LED strip in the gap
     const glow=new THREE.Mesh(new THREE.PlaneGeometry(.55,h),new THREE.MeshBasicMaterial({map:GLOWT,transparent:true,color:TH?TH.led:0xffffff,opacity:.55,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
     glow.position.set(x,0,.04);glow.renderOrder=3;g.add(glow);
+    const pool=new THREE.Mesh(new THREE.PlaneGeometry(1.5,h*.9),new THREE.MeshBasicMaterial({map:GLOWT,transparent:true,color:TH?TH.ledL:0xffb468,opacity:.32,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));pool.position.set(x,0,.045);pool.renderOrder=3;g.add(pool);
     if(lights){const l=new THREE.PointLight(TH?TH.ledL:0xffb468,.35,1.6,2);l.position.set(x,0,.25);g.add(l)}}}}
 TYPES.slatleft={t:'slatleft',n:'Slat wall (left)',w:4.86,d:.04,kind:'wall',y:1.26,c:0x9a6a44,b:slatWall(4.86,2.32,[.28,.6,.9])};
 TYPES.slatsofa={t:'slatsofa',n:'Slat wall (by the sofa)',w:2.38,d:.04,kind:'wall',y:1.26,c:0x6e4a30,b:slatWall(2.38,2.32,[.35,.75])};
@@ -1789,12 +1792,12 @@ const PICK=[
   {id:'orange',label:'orange',home:['uppercabopen',-.05,-.312,.2,0],shelf:1,slot:[-.075,-.06,0],make:()=>fruit('orange')},
   {id:'pear',label:'pear',home:['uppercabopen',-.17,-.31,.21,0],shelf:1,slot:[.075,-.06,0],make:()=>fruit('pear')},
   {id:'lemon',label:'lemon',home:['uppercabopen',-.04,-.31,.1,.7],shelf:1,slot:[.22,-.06,.4],make:()=>fruit('lemon')},
-  {id:'burger',label:'burger',home:['world',4.28,.97,3.95,0],shelf:0,slot:[-.165,-.04,0],make:()=>{const g=new THREE.Group();TYPES.burger.b(g);return g}},
+  {id:'burger',label:'burger',home:['world',3.83,.97,3.95,0],shelf:0,slot:[-.165,-.04,0],make:()=>{const g=new THREE.Group();TYPES.burger.b(g);return g}},
   {id:'toast',label:'toast',home:null,shelf:0,slot:[.17,-.03,.2],lvl:.8,make:p=>toastPair(p.lvl)}];
 PICK.forEach(p=>{p.loc=p.id==='toast'?'none':'home';p.fly=null});
 const PBY=Object.fromEntries(PICK.map(p=>[p.id,p]));
 const KG=new THREE.Group();scene.add(KG);
-let held=null;
+let held=null;isHeld=()=>!!held;
 function buildPicks(){for(const p of PICK){if(p.obj)KG.remove(p.obj);const o=p.make(p);keep(o);o.traverse(x=>{x.userData.k='pick:'+p.id});o.matrixAutoUpdate=false;p.obj=o;KG.add(o)}}
 const _m=new THREE.Matrix4(),_q=new Q4(),_e=new THREE.Euler(),_p=new V3(),_s=new V3(1,1,1),ONE=new V3(1,1,1);
 function locMatrix(p,loc,out){
