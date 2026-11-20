@@ -2003,7 +2003,6 @@ function kitchenFrame(now){const dt=Math.min(.05,(now-klast)/1000);klast=now;
   requestAnimationFrame(kitchenFrame)}
 buildPoker();
 rebuildItems=(orig=>function(){orig();buildPicks()})(rebuildItems);rebuildItems();
-window.__play={K,R,GLB,DEAL,PBY,act,startDeal,deal,look:(x,z,y,yw,pt)=>animTo({x,z,y,yaw:yw,pitch:pt},.01,()=>{})};  // test handle
 requestAnimationFrame(kitchenFrame);
 })();
 })();
