@@ -823,8 +823,8 @@ $('m-plan').onclick=()=>setMode('plan');$('m-orbit').onclick=()=>setMode('orbit'
 function bounds(){let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;state.walls.forEach(w=>{x0=Math.min(x0,w.x1,w.x2);x1=Math.max(x1,w.x1,w.x2);z0=Math.min(z0,w.z1,w.z2);z1=Math.max(z1,w.z1,w.z2)});if(x0>x1){x0=0;x1=GW;z0=0;z1=GD}return {cx:(x0+x1)/2,cz:(z0+z1)/2,size:Math.max(x1-x0,z1-z0)}}
 
 // drag direction: normal = grab the room (it follows the cursor); inverted = the view turns the way you drag
-const INV={on:false};try{INV.on=localStorage.getItem('cz-invert')==='on'}catch(e){}
-function setInv(v){INV.on=v;const b=$('inv');if(b){b.setAttribute('aria-pressed',v);b.querySelector('.on').textContent=v?'drag inverted':'invert drag'}try{localStorage.setItem('cz-invert',v?'on':'off')}catch(e){}}
+const INV={on:false};try{INV.on=localStorage.getItem('cz-invert2')==='on'}catch(e){}
+function setInv(v){INV.on=v;const b=$('inv');if(b){b.setAttribute('aria-pressed',v);b.querySelector('.on').textContent=v?'drag inverted':'invert drag'}try{localStorage.setItem('cz-invert2',v?'on':'off')}catch(e){}}
 $('inv').onclick=()=>setInv(!INV.on);setInv(INV.on);
 addEventListener('keydown',e=>{if(e.key.toLowerCase()==='i'&&!e.metaKey&&!e.ctrlKey&&!(e.target.closest&&e.target.closest('input,textarea')))setInv(!INV.on)});
 // walk
@@ -1003,13 +1003,16 @@ if(!/[?&]code\b/.test(location.search)&&THREE.GLTFLoader){
       steam(g,6,.05,.28,0,.25,0)},
     led:g=>{P(g,.145,.145,new THREE.MeshBasicMaterial({map:TX.led}),0,.33,.012,-.15);const l=new THREE.PointLight(0xffb05a,.8,2.8,2);l.position.set(0,.33,.2);g.add(l)}};
   let ENV=null;try{if(THREE.RoomEnvironment){const pm=new THREE.PMREMGenerator(renderer);ENV=pm.fromScene(new THREE.RoomEnvironment(),.04).texture;pm.dispose()}}catch(e){}
-  const loader=new THREE.GLTFLoader();
-  ['desk_corner','living','poker','kitchen'].forEach(f=>loader.load('models/'+f+'.json',gl=>{
+  const loader=new THREE.GLTFLoader(),FILES=['desk_corner','living','poker','kitchen'];
+  // rebuild the room once, when every model is in (a rebuild per model froze the page several times while loading)
+  let waiting=FILES.length;const arrived=()=>{if(--waiting===0){rebuildItems();if(sel)showSel()}window.__bootStep&&window.__bootStep()};
+  const MODELV='20261120b';  // bump when models/*.json change, so browsers do not reuse an old cached copy
+  FILES.forEach(f=>loader.load('models/'+f+'.json?v='+MODELV,gl=>{
     gl.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;if(ENV){o.material.envMap=ENV;o.material.envMapIntensity=.55}
       if(/bulb$/.test(o.material.name))o.material=new THREE.MeshBasicMaterial({color:0xfff1d0})}});
     gl.scene.children.forEach(src=>{GLB[src.name]=src;const T=TYPES[src.name];if(!T)return;
       T.b=g=>{const m=src.clone(true);m.position.set(0,0,0);m.rotation.set(0,0,0);g.add(m);if(EXTRA[src.name])EXTRA[src.name](g);if(KX[src.name])KX[src.name](g)}});
-    rebuildItems();if(sel)showSel();window.__bootStep&&window.__bootStep()},undefined,e=>{console.warn('model did not load: '+f,e);window.__bootStep&&window.__bootStep()}));
+    arrived()},undefined,e=>{console.warn('model did not load: '+f,e);arrived()}));
 }
 
 
@@ -1181,13 +1184,38 @@ function themeProps(){if(!TH)return;const P=TH.props,c=h=>new THREE.Color(h);
       else if(o.r>.8&&o.g>.8&&o.b>.8){m.color.copy(c(P.cab)).multiplyScalar(.55);if(m.specular)m.specular.set(0x0c0c0c)}})}}
 const CABS=['uppercab','uppercabopen','fridge','peninsula','barstool','sink','tvconsole','spices','toaster'];
 // repaint a baked texture: grey fabric -> theme fabric, yellow cushions -> theme cushion (keeps the baked shading)
-const RECOL=new Map();
-function recolour(t,key,P,rule){const k=t.uuid+key+THK;if(RECOL.has(k))return RECOL.get(k);const im=t.image;if(!im||!im.width)return t;
+// The repaint runs on the GPU: the baked image is drawn once into a render target through a small shader that applies
+// the same rule (about 1 ms per 1024px image, instead of 40-200 ms reading every pixel on the CPU at startup).
+// The rules match the CPU ones in themeProps; byte values (0-255, sRGB) in, sRGB bytes out.
+const RECOLI=new WeakMap(),RC={scene:new THREE.Scene(),cam:new THREE.OrthographicCamera(-1,1,1,-1,0,1),mats:{}};
+RC.quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2));RC.quad.frustumCulled=false;RC.scene.add(RC.quad);
+const RCRULE={
+  sofa:`if(sat>.35&&mx>60.&&c.r>=c.b&&c.g>=c.b&&c.r-c.g<90.)c=min(vec3(255.),uA*(mx/215.));else if(L<140.)c=min(vec3(255.),uB*min(1.6,L/40.));`,
+  cab:`if(mn>150.&&sat<.15&&c.r>=c.b-2.)c=min(vec3(255.),uA*(L/235.));`};
+function rcMat(key){if(RC.mats[key])return RC.mats[key];
+  return RC.mats[key]=new THREE.ShaderMaterial({uniforms:{src:{value:null},uA:{value:new THREE.Vector3()},uB:{value:new THREE.Vector3()}},depthTest:false,depthWrite:false,toneMapped:false,
+    vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}',
+    fragmentShader:`uniform sampler2D src;uniform vec3 uA,uB;varying vec2 vUv;void main(){vec4 t=texture2D(src,vUv);vec3 c=floor(t.rgb*255.+.5);
+      float mx=max(c.r,max(c.g,c.b)),mn=min(c.r,min(c.g,c.b)),sat=mx>0.?(mx-mn)/mx:0.,L=(c.r+c.g+c.b)/3.;
+      ${RCRULE[key]}gl_FragColor=vec4(c/255.,t.a);}`})}
+const hx3=h=>new THREE.Vector3(parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16));
+function recolour(t,key,P,rule){const im=t.image;if(!im||!im.width)return t;const k=key+THK;let per=RECOLI.get(t);if(!per)RECOLI.set(t,per=new Map());
+  if(per.has(k))return per.get(k);
+  if(!RCRULE[key]||!renderer.capabilities.isWebGL2&&(im.width&(im.width-1)))return recolourCPU(t,key,P,rule,per,k);
+  const m=rcMat(key);m.uniforms.src.value=t;m.uniforms.uA.value.copy(hx3(key==='sofa'?P.soft:P.cab));m.uniforms.uB.value.copy(hx3(P.sofa||'#000000'));
+  const rt=new THREE.WebGLRenderTarget(im.width,im.height,{wrapS:t.wrapS,wrapT:t.wrapT,magFilter:THREE.LinearFilter,minFilter:THREE.LinearMipmapLinearFilter,generateMipmaps:true,depthBuffer:false,stencilBuffer:false});
+  const prevT=renderer.getRenderTarget(),prevS=renderer.shadowMap.needsUpdate,prevA=renderer.shadowMap.autoUpdate,prevE=renderer.outputEncoding,prevTM=renderer.toneMapping;
+  renderer.shadowMap.autoUpdate=false;renderer.toneMapping=THREE.NoToneMapping;renderer.outputEncoding=THREE.LinearEncoding;
+  RC.quad.material=m;renderer.setRenderTarget(rt);renderer.render(RC.scene,RC.cam);renderer.setRenderTarget(prevT);
+  renderer.shadowMap.needsUpdate=prevS;renderer.shadowMap.autoUpdate=prevA;renderer.outputEncoding=prevE;renderer.toneMapping=prevTM;
+  const n=rt.texture;n.encoding=t.encoding;n.anisotropy=t.anisotropy;n.flipY=false;per.set(k,n);return n}
+// CPU fallback (WebGL1 with a non power-of-two image, or a rule with no shader version)
+function recolourCPU(t,key,P,rule,per,k){const im=t.image;
   const cv=document.createElement('canvas');cv.width=im.width;cv.height=im.height;const g=cv.getContext('2d');g.drawImage(im,0,0);const D=g.getImageData(0,0,cv.width,cv.height),d=D.data;
   const hx=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)],HX={};
   for(let i=0;i<d.length;i+=4){const r=d[i],gg=d[i+1],b=d[i+2],mx=Math.max(r,gg,b),mn=Math.min(r,gg,b),sat=mx?(mx-mn)/mx:0,L=(r+gg+b)/3;
     const o=rule(r,gg,b,mx,sat,L);if(!o)continue;const T=HX[o[0]]||(HX[o[0]]=hx(o[0])),f=o[1];d[i]=Math.min(255,T[0]*f);d[i+1]=Math.min(255,T[1]*f);d[i+2]=Math.min(255,T[2]*f)}
-  g.putImageData(D,0,0);const n=new THREE.CanvasTexture(cv);n.encoding=t.encoding;n.flipY=t.flipY;n.wrapS=t.wrapS;n.wrapT=t.wrapT;n.anisotropy=t.anisotropy;RECOL.set(k,n);return n}
+  g.putImageData(D,0,0);const n=new THREE.CanvasTexture(cv);n.encoding=t.encoding;n.flipY=t.flipY;n.wrapS=t.wrapS;n.wrapT=t.wrapT;n.anisotropy=t.anisotropy;per.set(k,n);return n}
 rebuildItems=(orig=>function(){orig();themeProps()})(rebuildItems);themeProps();
 // Only these five objects open something. Chairs still let you sit.
 const CLICK={monitor:'resume',laptop:'podcasts',journal:'journal',pokertable:'poker',flattv:'channels',phone:'cipher'};
@@ -1686,6 +1714,13 @@ if(LAB){document.body.classList.add('lab-'+LAB);
   body .view .kp{top:18px;left:20px;bottom:auto;font-size:13px;opacity:.5;max-width:calc(50vw - 130px);line-height:1.5}
   @media (max-width:640px),(pointer:coarse){body .view .kp{display:none}}
   body .view .kp kbd{font-size:10px}
+  body .view .kp{opacity:1;font:500 15px "Hanken Grotesk",sans-serif;color:#fff6e8;background:rgba(20,15,11,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:0;border-radius:999px;padding:6px 14px;max-width:none;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+  body .view .kp kbd{font:600 12px "IBM Plex Mono",monospace;color:#fff6e8;border:1px solid rgba(255,246,232,.75);border-radius:3px;padding:0 4px;margin-right:2px;background:rgba(255,246,232,.08)}
+  body .view .snd{font-size:15px;color:#fff6e8;background:rgba(20,15,11,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:999px;padding:6px 12px;gap:8px}
+  body .view .snd:hover{background:rgba(20,15,11,.8)}
+  body .view .snd .k{font-size:12px;font-weight:600;color:#fff6e8;border-color:rgba(255,246,232,.75)}
+  body .view .snd.inv[aria-pressed=false] .on{color:#fff6e8;text-decoration:none}
+  body .view .snd#snd[aria-pressed=false] .on{color:rgba(255,246,232,.6);text-decoration:line-through}
   `;document.head.appendChild(st);
   const view=document.querySelector('.view'),ht=$('hinttxt');
   if(LAB==='quiet'){ht.textContent='Start with the monitor on the desk';tipLook();
@@ -2035,12 +2070,37 @@ bool fKeep(vec3 p){bool r=fReg(p);if(uRegS>.5&&!r)return false;if(uRegS<-.5&&r)r
 `;
 const mkU=()=>({uFInv:{value:new THREE.Matrix4()},uReg:{value:new V4()},uRegT:{value:0},uRegS:{value:0},uPl:{value:[0,1,2].map(()=>new V4())},uNP:{value:0},
   uBt:{value:Array.from({length:12},()=>new V4())},uNB:{value:0},uIn:{value:new THREE.Color(0xf0d6a4)},uInA:{value:.3}});
-function patchMat(m0,U){const m=m0.clone();if(!m.isMeshDepthMaterial)m.side=THREE.DoubleSide;
+// Cut or bitten food reads as solid: every back face seen through a cut is painted one flat inside colour (the mesh's
+// own average colour mixed toward the food's flesh colour, with a faint crumb grain) and lit as the flat cut face,
+// with the normal of the cut plane that faces the camera (or facing the camera, for bites). Non-standard materials
+// (Lambert, Phong) become standard so the lighting is per pixel; see-through overlays show no inside.
+function patchMat(m0,U){let m;
+  if(m0.isMeshDepthMaterial||m0.isMeshStandardMaterial)m=m0.clone();
+  else m=new THREE.MeshStandardMaterial({color:m0.color?m0.color.clone():new THREE.Color(0xffffff),map:m0.map||null,roughness:.7,metalness:0,transparent:!!m0.transparent,opacity:m0.opacity==null?1:m0.opacity,name:m0.name||''});
+  if(!m.isMeshDepthMaterial)m.side=THREE.DoubleSide;const see=!!m.transparent;
   m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,U);
     sh.vertexShader='uniform mat4 uFInv;varying vec3 vF;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\nvF=(uFInv*modelMatrix*vec4(transformed,1.0)).xyz;');
-    sh.fragmentShader=sh.fragmentShader.replace('void main() {',FHEAD+'void main() {').replace('#include <clipping_planes_fragment>','if(!fKeep(vF))discard;\n#include <clipping_planes_fragment>')
-      .replace('#include <map_fragment>','#include <map_fragment>\nif(!gl_FrontFacing)diffuseColor.rgb=mix(diffuseColor.rgb,uIn,uInA);')};
-  m.customProgramCacheKey=()=>'food'+(m.isMeshDepthMaterial?'d':'');m.needsUpdate=true;return m}
+    let f=sh.fragmentShader.replace('void main() {',FHEAD+'void main() {').replace('#include <clipping_planes_fragment>','if(!fKeep(vF))discard;\n'+(see?'if(!gl_FrontFacing)discard;\n':'')+'#include <clipping_planes_fragment>');
+    if(!m.isMeshDepthMaterial){
+      f=f.replace('#include <map_fragment>',`#include <map_fragment>
+if(!gl_FrontFacing){
+#ifdef USE_MAP
+  vec3 fAvg=mapTexelToLinear(texture2D(map,vUv,10.0)).rgb;
+#else
+  vec3 fAvg=vec3(1.0);
+#endif
+  diffuseColor.rgb=mix(diffuse*fAvg,uIn,uInA);
+  float gr=fract(sin(dot(floor(vF*900.0),vec3(12.9898,78.233,37.719)))*43758.5453);
+  diffuseColor.rgb*=0.92+0.08*gr;diffuseColor.a=1.0;}`)
+      .replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+if(!gl_FrontFacing){vec3 toCam=normalize(vViewPosition);normal=toCam;
+  // the face you see is where the view ray enters the kept part: the cut plane with the latest entry along the ray
+  vec3 ro=(uFInv*vec4(cameraPosition,1.0)).xyz,rd=vF-ro;float tE=-1e9;int hit=-1;
+  for(int i=0;i<3;i++){if(i>=uNP)break;float dn=dot(uPl[i].xyz,rd),o=dot(uPl[i].xyz,ro)-uPl[i].w;if(dn<0.0&&o>0.0){float t=-o/dn;if(t>tE){tE=t;hit=i;}}}
+  for(int i=0;i<3;i++){if(i==hit)normal=normalize(mat3(viewMatrix)*(uPl[i].xyz*mat3(uFInv)));}}`)
+      .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nif(!gl_FrontFacing)roughnessFactor=max(roughnessFactor,.75);');}
+    sh.fragmentShader=f};
+  m.customProgramCacheKey=()=>'food2'+(m.isMeshDepthMaterial?'d':'')+(see?'t':'');m.needsUpdate=true;return m}
 function patchGroup(g,U,root){g.traverse(o=>{if(!o.isMesh||o.userData.isOutline)return;
   o.material=Array.isArray(o.material)?o.material.map(m=>patchMat(m,U)):patchMat(o.material,U);
   o.customDepthMaterial=patchMat(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking}),U);
