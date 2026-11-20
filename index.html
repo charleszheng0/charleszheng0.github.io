@@ -1771,7 +1771,7 @@ function sendTo(p,loc,dur=.5){const m=new THREE.Matrix4();if(p.fly||!locMatrix(p
   const a=new V3(),b=new Q4(),c=new V3();m.decompose(a,b,c);p.fly={t:0,dur,pos:a,quat:b};p.loc=loc}
 function tickPicks(dt){const m=new THREE.Matrix4(),pp=new V3(),qq=new Q4(),sc=new V3();
   for(const p of PICK){const o=p.obj;if(!o)continue;o.visible=p.loc!=='none';if(!o.visible)continue;if(!locMatrix(p,p.loc,m))continue;
-    if(p.fly){const f=p.fly;f.t+=dt/f.dur;const k=io(Math.min(1,f.t));m.decompose(pp,qq,sc);const lift=Math.sin(Math.PI*k)*(p.loc==='hand'?.06:.12);
+    if(p.fly){const f=p.fly;f.t+=dt/f.dur;const k=io(Math.min(1,f.t));m.decompose(pp,qq,sc);const lift=Math.sin(Math.PI*k)*(f.lift!=null?f.lift:p.loc==='hand'?.06:.12);
       pp.lerpVectors(f.pos,pp,k);pp.y+=lift;const tq=qq.clone();qq.copy(f.quat).slerp(tq,k);m.compose(pp,qq,ONE);if(f.t>=1)p.fly=null}
     o.matrix.copy(m);o.matrixWorldNeedsUpdate=true}}
 
@@ -1968,6 +1968,126 @@ canvas.addEventListener('pointermove',e=>{if(mode!=='walk'||drag&&drag.moved)ret
   if(text){hv.textContent=text;hv.style.left=(e.clientX-r.left+14)+'px';hv.style.top=(e.clientY-r.top+14)+'px';hv.hidden=false;canvas.style.cursor='pointer';hoverId=null}
   else if(DEAL.on)hv.hidden=true});
 
+// ---------- bites and cutting (from the food chat: right click / F / long press bites; the board knife cuts) ----------
+// Each food mesh gets a small shader that hides what is gone: round bites (tall, so you see the layers) and the
+// far side of each cut. Back faces show through the holes, tinted to the inside colour. The same test runs in JS.
+const FOOD={burger:{c:[0,.045,0],r:.068,n:6,inside:0xf0d6a4,mix:.3,bottom:.0045},apple:{c:[0,.032,0],r:.036,n:4,inside:0xf2e3b8,mix:.85,bottom:0},
+  orange:{c:[0,.036,0],r:.037,n:4,inside:0xf7a640,mix:.8,bottom:0},pear:{c:[0,.045,0],r:.034,n:4,inside:0xf1ebc8,mix:.85,bottom:0},
+  lemon:{c:[0,.027,0],r:.04,n:3,inside:0xf5e57a,mix:.8,bottom:0},banana:{c:[0,.03,0],r:.1,n:5,inside:0xf3ead0,mix:.85,bottom:0},
+  bread:{c:[0,.05,0],r:.13,n:7,inside:0xecd5a4,mix:.4,bottom:0},toast:{c:[0,.012,0],r:.05,n:4,inside:0xd9a466,mix:.4,bottom:0}};
+const V4=THREE.Vector4;
+const FHEAD=`uniform mat4 uFInv;uniform vec4 uReg;uniform int uRegT;uniform float uRegS;uniform vec4 uPl[3];uniform int uNP;uniform vec4 uBt[12];uniform int uNB;uniform vec3 uIn;uniform float uInA;varying vec3 vF;
+bool fReg(vec3 p){if(uRegT==2){vec2 d=p.xz-uReg.xy;float c=cos(uReg.z),s=sin(uReg.z);float px=d.x*c-d.y*s,pz=d.x*s+d.y*c;return px>-.148&&px<.218&&pz>-.05&&pz<.005&&p.y>uReg.w;}return true;}
+bool fKeep(vec3 p){bool r=fReg(p);if(uRegS>.5&&!r)return false;if(uRegS<-.5&&r)return false;
+ for(int i=0;i<3;i++){if(i>=uNP)break;if(dot(uPl[i].xyz,p)>uPl[i].w)return false;}
+ for(int i=0;i<12;i++){if(i>=uNB)break;vec3 q=p-uBt[i].xyz;q.y*=.35;if(dot(q,q)<uBt[i].w*uBt[i].w)return false;}
+ return true;}
+`;
+const mkU=()=>({uFInv:{value:new THREE.Matrix4()},uReg:{value:new V4()},uRegT:{value:0},uRegS:{value:0},uPl:{value:[0,1,2].map(()=>new V4())},uNP:{value:0},
+  uBt:{value:Array.from({length:12},()=>new V4())},uNB:{value:0},uIn:{value:new THREE.Color(0xf0d6a4)},uInA:{value:.3}});
+function patchMat(m0,U){const m=m0.clone();if(!m.isMeshDepthMaterial)m.side=THREE.DoubleSide;
+  m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,U);
+    sh.vertexShader='uniform mat4 uFInv;varying vec3 vF;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\nvF=(uFInv*modelMatrix*vec4(transformed,1.0)).xyz;');
+    sh.fragmentShader=sh.fragmentShader.replace('void main() {',FHEAD+'void main() {').replace('#include <clipping_planes_fragment>','if(!fKeep(vF))discard;\n#include <clipping_planes_fragment>')
+      .replace('#include <map_fragment>','#include <map_fragment>\nif(!gl_FrontFacing)diffuseColor.rgb=mix(diffuseColor.rgb,uIn,uInA);')};
+  m.customProgramCacheKey=()=>'food'+(m.isMeshDepthMaterial?'d':'');m.needsUpdate=true;return m}
+function patchGroup(g,U,root){g.traverse(o=>{if(!o.isMesh||o.userData.isOutline)return;
+  o.material=Array.isArray(o.material)?o.material.map(m=>patchMat(m,U)):patchMat(o.material,U);
+  o.customDepthMaterial=patchMat(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking}),U);
+  o.onBeforeRender=()=>U.uFInv.value.copy(root.matrixWorld).invert()})}
+function keepP(p,q){for(const v of p.planes)if(v.x*q.x+v.y*q.y+v.z*q.z>v.w)return false;
+  for(const b of p.bites){const dx=q.x-b.x,dy=(q.y-b.y)*.35,dz=q.z-b.z;if(dx*dx+dy*dy+dz*dz<b.w*b.w)return false}return true}
+function syncU(p){const U=p.U;U.uNP.value=p.planes.length;p.planes.forEach((q,i)=>U.uPl.value[i].copy(q));const bs=p.bites.slice(-12);U.uNB.value=bs.length;bs.forEach((b,i)=>U.uBt.value[i].copy(b));U.uIn.value.set(p.F.inside);U.uInA.value=p.F.mix}
+PICK.forEach(p=>{p.F=FOOD[p.id];p.planes=[];p.bites=[];p.left=p.F.n;p.c=new V3(...p.F.c);p.depth=0});
+// the burger's plate stays where the burger lives; the burger you carry has no plate
+let PLATE=null;
+const isPlate=o=>/plate/i.test((o.material&&o.material.name)||'')||o.userData.plate;
+buildPicks=(orig=>function(){orig();
+  for(const p of PICK){if(!p.obj)continue;p.U=p.U||mkU();p.obj.traverse(o=>{if(o.isMesh&&(p.id==='burger'||p.root==='burger')&&isPlate(o))o.visible=false});
+    const keepMeshes=[];p.obj.traverse(o=>{if(o.isMesh&&o.visible)keepMeshes.push(o)});keepMeshes.forEach(o=>patchGroup(o,p.U,p.obj));syncU(p);p.obj.traverse(o=>{o.userData.foodP=p})}
+  if(PLATE)KG.remove(PLATE);PLATE=new THREE.Group();TYPES.burger.b(PLATE);let any=false;PLATE.traverse(o=>{if(o.isMesh){if(isPlate(o))any=true;else o.visible=false}});
+  if(!any){PLATE=null;return}const h=PBY.burger.home;PLATE.position.set(h[1],h[2],h[3]);keep(PLATE);KG.add(PLATE)})(buildPicks);
+// the board and its knife (the baked knife is cut out of the board and drawn again on its own, so it can move)
+const KN={kx:-.07,kz:.095,kry:.12,top:.029};let KNIFE=null;
+KX.board=g=>{g.traverse(o=>{o.userData.k='board'});const meshes=[];g.traverse(o=>{if(o.isMesh)meshes.push(o)});
+  const U=mkU();U.uRegT.value=2;U.uRegS.value=-1;U.uReg.value.set(KN.kx,KN.kz,KN.kry,KN.top+.0002);
+  const kU=mkU();kU.uRegT.value=2;kU.uRegS.value=1;kU.uReg.value.set(KN.kx,KN.kz,KN.kry,KN.top+.0002);kU.uInA.value=0;
+  const pivot=new THREE.Group(),tilt=new THREE.Group(),ctr=new THREE.Group(),B=new THREE.Group(),A=new THREE.Group();pivot.add(tilt);tilt.add(ctr);ctr.add(B);B.add(A);
+  for(const m of meshes){const k=new THREE.Mesh(m.geometry,m.material);k.castShadow=true;k.userData.k='board';A.add(k);patchGroup(k,kU,k)}
+  meshes.forEach(m=>patchGroup(m,U,g));
+  const kc={x:.035,y:KN.top+.006,z:-.022},c=Math.cos(KN.kry),s=Math.sin(KN.kry);A.position.set(-KN.kx,0,-KN.kz);B.rotation.y=-KN.kry;ctr.position.set(-kc.x,-kc.y,-kc.z);
+  const rest={x:KN.kx+kc.x*c+kc.z*s,y:kc.y,z:KN.kz-kc.x*s+kc.z*c,ry:KN.kry,tl:0};g.add(pivot);const old=KNIFE;KNIFE={n:g,pivot,tilt,rest,anim:old&&old.anim};pose(rest)};
+function pose(P){KNIFE.pivot.position.set(P.x,P.y,P.z);KNIFE.pivot.rotation.y=P.ry;KNIFE.tilt.rotation.x=P.tl}
+// where things sit on the board
+const SLOTS=[[-.01,-.035],[.12,-.035],[-.14,-.035]];
+locMatrix=(orig=>function(p,loc,out){if(loc!=='board')return orig(p,loc,out);const n=anchor('board');if(!n)return null;
+  return out.compose(_p.set(p.bpos[0],KN.top-p.F.bottom+.001,p.bpos[1]),_q.set(0,0,0,1),ONE).premultiply(n.matrixWorld)})(locMatrix);
+const onBoard=()=>PICK.filter(p=>p.loc==='board');
+function putBoard(p){const used=onBoard().filter(q=>q!==p).map(q=>[q.bpos[0]+q.c.x,q.bpos[1]+q.c.z]);
+  const s=SLOTS.find(([x,z])=>used.every(u=>Math.hypot(u[0]-x,u[1]-z)>.09))||SLOTS[0];p.bpos=[s[0]-p.c.x,s[1]-p.c.z];if(held===p)held=null;sendTo(p,'board',.4);hud()}
+putBack=(orig=>function(p){if(p.piece){if(held===p)held=null;if(!p.bpos)p.bpos=[0,-.035];sendTo(p,'board',.45);hud();return}orig(p)})(putBack);
+putFridge=(orig=>function(p){if(p.piece){toast(`The ${p.label} has no spot in the fridge`);return}orig(p)})(putFridge);
+// sounds, on the room's sound switch
+let actx=null,noise=null;const sndOn=()=>{const b=$('snd');return !b||b.getAttribute('aria-pressed')!=='false'};
+function au(){if(!actx){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;actx=new A();noise=actx.createBuffer(1,actx.sampleRate*.5,actx.sampleRate);const d=noise.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}if(actx.state==='suspended')actx.resume();return actx}
+function nz(t,dur,type,f,q,v){const n=actx.createBufferSource(),fl=actx.createBiquadFilter(),g=actx.createGain();n.buffer=noise;fl.type=type;fl.frequency.value=f;fl.Q.value=q;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);n.connect(fl);fl.connect(g);g.connect(actx.destination);n.start(t,Math.random()*.3);n.stop(t+dur+.02)}
+function crunch(){if(!sndOn())return;try{if(!au())return;const t=actx.currentTime+.01;for(let i=0;i<4;i++)nz(t+i*.035+Math.random()*.015,.05,'bandpass',1800+Math.random()*1600,1.2,.35)}catch(e){}}
+function chopSnd(){if(!sndOn())return;try{if(!au())return;const t=actx.currentTime+.005,o=actx.createOscillator(),g=actx.createGain();o.frequency.setValueAtTime(210,t);o.frequency.exponentialRampToValueAtTime(80,t+.09);g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.0001,t+.14);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+.16);nz(t,.04,'highpass',2500,.7,.25)}catch(e){}}
+// a bite: find the edge of what is left on the side facing you, take a round bite out of it
+function bite(p){if(!p||!p.obj||p.loc==='none')return;const inv=p.obj.matrix.clone().invert(),cl=persp.position.clone().applyMatrix4(inv).sub(p.c);cl.y=0;if(cl.lengthSq()<1e-8)cl.set(0,0,1);cl.normalize();
+  let hit=null;for(const da of [0,.5,-.5,1,-1,1.6,-1.6,2.3,-2.3,3.14]){const a=Math.atan2(cl.z,cl.x)+da+(Math.random()-.5)*.3,d=new V3(Math.cos(a),0,Math.sin(a));
+    for(let s=p.F.r;s>0;s-=.004){const q=p.c.clone().addScaledVector(d,s);if(keepP(p,q)){hit=q.addScaledVector(d,.014);break}}if(hit)break}
+  crunch();p.left--;if(held===p)p.dip=1;
+  if(!hit||p.left<=0){eaten(p);return}
+  p.bites.push(new V4(hit.x,p.c.y,hit.z,Math.min(.032,p.F.r*.55+.006)));syncU(p)}
+const rootOf=p=>p.piece?PBY[p.root]:p;
+function eaten(p){if(held===p)held=null;hud();
+  if(p.piece){KG.remove(p.obj);PICK.splice(PICK.indexOf(p),1);delete PBY[p.id]}else p.loc='none';
+  const r=rootOf(p);if(r&&r.loc==='none'&&!PICK.some(q=>q.piece&&q.root===r.id)){
+    if(r.home){toast('All gone. Another one is on the way');after(12,()=>{r.planes=[];r.bites=[];r.left=r.F.n;r.c=new V3(...r.F.c);r.loc='home';r.fly=null;syncU(r)})}else toast('All gone')}}
+// cutting: the knife lifts, turns on its edge, chops down through the food, and goes back
+let PID=1;
+function cut(){if(!KNIFE){toast('No knife here');return}if(KNIFE.anim)return;
+  const p=onBoard().filter(q=>q.depth<2&&!q.fly).sort((a,b)=>a.depth-b.depth)[0];if(!p){toast(onBoard().length?'That is small enough':'Put some food on the board first');return}
+  const at=new V3(p.bpos[0]+p.c.x,p.c.y+KN.top,p.bpos[1]+p.c.z);
+  const ry=p.depth?Math.PI:Math.PI/2,dir=[Math.cos(ry),-Math.sin(ry)];
+  const R0=KNIFE.rest,top=at.y+.075,lo=KN.top+.024,x=at.x-dir[0]*.065,z=at.z-dir[1]*.065;
+  const up={x,y:top,z,ry,tl:-Math.PI/2},down={x,y:lo,z,ry,tl:-Math.PI/2},lift={x,y:lo+.03,z,ry,tl:-Math.PI/2};
+  KNIFE.anim={t:0,keys:[[0,R0],[.35,up],[.5,down],[.62,lift],[1.05,R0]],done:false,p,ry}}
+function split(p,ry){const nl=new V3(Math.sin(ry),0,Math.cos(ry)),d=nl.dot(p.c),root=rootOf(p);
+  const b={id:'piece'+(PID++),piece:true,root:root.id,label:'',home:null,shelf:0,slot:[0,0,0],make:root.make,lvl:root.lvl,F:p.F,planes:p.planes.map(v=>v.clone()),bites:p.bites.map(v=>v.clone()),c:p.c.clone(),depth:p.depth,bpos:p.bpos.slice(),loc:'board',fly:null};
+  if(!p.piece){// the whole food becomes the first half: hand its place over to a piece, and hide the original
+    const a=Object.assign({},b,{id:'piece'+(PID++),planes:p.planes.map(v=>v.clone()),bites:p.bites.map(v=>v.clone()),c:p.c.clone(),bpos:p.bpos.slice()});p.loc='none';p=a;PICK.push(a);PBY[a.id]=a}
+  PICK.push(b);PBY[b.id]=b;
+  p.planes.push(new V4(nl.x,nl.y,nl.z,d));b.planes.push(new V4(-nl.x,-nl.y,-nl.z,-d));p.depth++;b.depth=p.depth;
+  const off=p.depth>1?.018:.026;p.c.addScaledVector(nl,-off);b.c.addScaledVector(nl,off);p.left=b.left=Math.max(1,Math.ceil((p.left||p.F.n)/2));
+  const nm=(p.depth>1?'quarter ':'half ')+root.label;p.label=b.label=nm;
+  buildPicks();
+  [[p,-1],[b,1]].forEach(([q,sg])=>{const m=new THREE.Matrix4();locMatrix(q,'board',m);const a=new V3(),qq=new Q4();m.decompose(a,qq,new V3());q.bpos=[q.bpos[0]+nl.x*sg*.014,q.bpos[1]+nl.z*sg*.014];q.fly={t:0,dur:.25,pos:a,quat:qq,lift:0}})}
+tickPicks=(orig=>function(dt){orig(dt);
+  if(KNIFE&&KNIFE.anim){const A=KNIFE.anim;A.t+=dt;const ks=A.keys;let i=0;while(i<ks.length-2&&A.t>ks[i+1][0])i++;const [t0,a]=ks[i],[t1,b]=ks[i+1],k=io(Math.min(1,Math.max(0,(A.t-t0)/(t1-t0))));
+    pose({x:a.x+(b.x-a.x)*k,y:a.y+(b.y-a.y)*k,z:a.z+(b.z-a.z)*k,ry:a.ry+(b.ry-a.ry)*k,tl:a.tl+(b.tl-a.tl)*k});
+    if(!A.done&&A.t>=.5){A.done=true;chopSnd();if(PICK.includes(A.p)&&A.p.loc==='board')split(A.p,A.ry)}
+    if(A.t>=ks[ks.length-1][0]){KNIFE.anim=null;pose(KNIFE.rest)}}
+  for(const p of PICK)if(p.dip){p.dip=Math.max(0,p.dip-dt*5);if(p.obj&&held===p){const s=1-.08*Math.sin(Math.PI*p.dip);p.obj.matrix.multiply(new THREE.Matrix4().makeScale(s,s,s))}}})(tickPicks);
+// the lift in a short slide on the board is zero
+// clicks, hover, keys, long press
+kHit=(orig=>function(e){ndc(e);const objs=[...itemGroup.children,...KG.children.filter(o=>!held||o!==held.obj),PG];const hs=ray.intersectObjects(objs,true);
+  for(const h of hs){const o=h.object;if(o.isSprite||o.userData.isOutline||!o.visible)continue;const fp=o.userData.foodP;if(fp&&fp.obj){const q=h.point.clone().applyMatrix4(fp.obj.matrix.clone().invert());if(!keepP(fp,q))continue}
+    let x=o;while(x){if(x.userData.k)return{k:x.userData.k,h};x=x.parent;if(x===scene)break}return null}return null})(kHit);
+says=(orig=>function(k){if(k==='board'){if(held)return`Put the ${held.label} on the board`;const p=onBoard().find(q=>q.depth<2);return p?`Cut the ${p.label} with the knife`:''}return orig(k)})(says);
+act=(orig=>function(k){if(k==='board'){if(held)putBoard(held);else if(onBoard().length)cut();else return false;return true}return orig(k)})(act);
+let lastE=null,SUP=false,lp=null;
+const hovered=()=>{if(!lastE)return null;const h=kHit(lastE);return h&&h.k.startsWith('pick:')?PBY[h.k.slice(5)]:null};
+function biteAt(e){const h=kHit(e);const p=h&&h.k.startsWith('pick:')?PBY[h.k.slice(5)]:held;if(p)bite(p)}
+walkClick=(orig=>function(e){if(SUP){SUP=false;return}if(e.button===2&&!DEAL.on){biteAt(e);return}orig(e)})(walkClick);
+canvas.addEventListener('contextmenu',e=>{if(mode==='walk')e.preventDefault()});
+addEventListener('keydown',e=>{if(e.key.toLowerCase()!=='f'||mode!=='walk'||busy()||(e.target.closest&&e.target.closest('input,textarea')))return;const p=held||hovered();if(p)bite(p)});
+canvas.addEventListener('pointermove',e=>{lastE=e;if(lp&&Math.hypot(e.clientX-lp.x,e.clientY-lp.y)>10){clearTimeout(lp.t);lp=null}});
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'||mode!=='walk')return;const ev={clientX:e.clientX,clientY:e.clientY};lp={x:e.clientX,y:e.clientY,t:setTimeout(()=>{lp=null;const h=kHit(ev);const p=h&&h.k.startsWith('pick:')?PBY[h.k.slice(5)]:held;if(p){bite(p);SUP=true}},500)}});
+addEventListener('pointerup',()=>{if(lp){clearTimeout(lp.t);lp=null}});
+hud=(orig=>function(){orig();if(held&&!DEAL.on){const touch=matchMedia('(pointer:coarse)').matches;
+  HUD.innerHTML=`holding the <b>${held.label}</b> &nbsp;·&nbsp; ${touch?'<b>hold</b> to take a bite':'<b>right click</b> or <b>f</b> takes a bite'} &nbsp;·&nbsp; the board cuts it &nbsp;·&nbsp; <b>r</b> puts it back`}})(hud);
 // ---------- every frame ----------
 let klast=performance.now();
 function kitchenFrame(now){const dt=Math.min(.05,(now-klast)/1000);klast=now;
