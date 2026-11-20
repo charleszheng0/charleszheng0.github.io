@@ -149,7 +149,7 @@ body.recmode .app{display:none}
 body.recmode{overflow:auto}
 .top,.recbar,.hud .tip{display:none!important}
 .app{grid-template-rows:0 minmax(0,1fr)!important}
-.snd{position:absolute;right:16px;bottom:18px;z-index:9;font:12px var(--f-mono);color:#e8e6e1;background:rgba(18,18,20,.82);border:1px solid #2c2c30;border-radius:4px;padding:6px 10px;cursor:pointer;display:flex;gap:6px;align-items:center}.snd:hover{border-color:#77736c}.snd .k{color:#77736c}.snd[aria-pressed=false] .on{text-decoration:line-through;color:#77736c}body.recmode .snd{display:none}
+.snd{position:absolute;right:16px;bottom:18px;z-index:9;font:12px var(--f-mono);color:#e8e6e1;background:rgba(18,18,20,.82);border:1px solid #2c2c30;border-radius:4px;padding:6px 10px;cursor:pointer;display:flex;gap:6px;align-items:center}.snd:hover{border-color:#77736c}.snd .k{color:#77736c}.snd[aria-pressed=false] .on{text-decoration:line-through;color:#77736c}body.recmode .snd{display:none}.snd.inv{right:104px}
 .kp{position:absolute;left:16px;bottom:18px;z-index:6;font:12px var(--f-mono);color:#e8e6e1;background:rgba(18,18,20,.82);border:1px solid #2c2c30;border-radius:4px;padding:6px 10px;transition:opacity .6s;pointer-events:none}.kp.off{opacity:0}.kp span{color:#77736c;margin:0 4px}
 kbd{font:500 11px var(--f-mono);border:1px solid #4a4a50;border-bottom-width:2px;border-radius:3px;padding:0 5px;margin-right:3px;background:#1e1e22;color:#e8e6e1}
 .ms{position:fixed;z-index:45;display:flex;align-items:center;gap:4px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.65),0 0 14px rgba(0,0,0,.35)}
@@ -329,6 +329,7 @@ table{color:inherit;font:inherit}
     <button class="exitz" id="exitz" hidden aria-label="Exit and step back"><span class="a">←</span> exit <span class="k">esc</span></button>
     <div class="hint" id="hint" hidden><i aria-hidden="true">›</i><span id="hinttxt">click the monitor <span class="m">for my</span> resume + contact</span></div>
     <div class="mon" id="mon" hidden></div>
+    <button class="snd inv" id="inv" aria-pressed="false" aria-label="Invert drag to look (I)"><span class="on">invert drag</span><span class="k">i</span></button>
     <button class="snd" id="snd" aria-pressed="true" aria-label="Sound effects on or off (M)"><span class="on">sound</span><span class="k">m</span></button>
   </div>
 
@@ -821,6 +822,11 @@ function setMode(m){mode=m;['plan','orbit','walk'].forEach(k=>$('m-'+k).setAttri
 $('m-plan').onclick=()=>setMode('plan');$('m-orbit').onclick=()=>setMode('orbit');$('m-walk').onclick=()=>setMode('walk');
 function bounds(){let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;state.walls.forEach(w=>{x0=Math.min(x0,w.x1,w.x2);x1=Math.max(x1,w.x1,w.x2);z0=Math.min(z0,w.z1,w.z2);z1=Math.max(z1,w.z1,w.z2)});if(x0>x1){x0=0;x1=GW;z0=0;z1=GD}return {cx:(x0+x1)/2,cz:(z0+z1)/2,size:Math.max(x1-x0,z1-z0)}}
 
+// drag direction: normal = grab the room (it follows the cursor); inverted = the view turns the way you drag
+const INV={on:false};try{INV.on=localStorage.getItem('cz-invert')==='on'}catch(e){}
+function setInv(v){INV.on=v;const b=$('inv');if(b){b.setAttribute('aria-pressed',v);b.querySelector('.on').textContent=v?'drag inverted':'invert drag'}try{localStorage.setItem('cz-invert',v?'on':'off')}catch(e){}}
+$('inv').onclick=()=>setInv(!INV.on);setInv(INV.on);
+addEventListener('keydown',e=>{if(e.key.toLowerCase()==='i'&&!e.metaKey&&!e.ctrlKey&&!(e.target.closest&&e.target.closest('input,textarea')))setInv(!INV.on)});
 // walk
 let yaw=0,pitch=0,keys={},walkTo=null,moveMode='keys';
 try{moveMode=localStorage.getItem('cz-move')||'keys'}catch(e){}
@@ -876,7 +882,7 @@ canvas.addEventListener('pointermove',e=>{
   if(mode==='plan'&&ghost&&p&&!drag){const T=TYPES[placing];let x=snap(p.x,.05),z=snap(p.z,.05),ry=ghostRy,y=0;
     if(T.kind==='wall'){const ws=wallSnap(p.x,p.z);if(ws){x=ws.x;z=ws.z;ry=ws.ry}y=T.y||1.5}else if(T.kind==='top')y=surfaceAt(x,z);else if(T.kind==='ceil')y=H;ghost.position.set(x,y,z);ghost.rotation.y=ry}
   if(!drag)return;
-  if(drag.walk){const dx=e.clientX-drag.lx,dy=e.clientY-drag.ly;drag.lx=e.clientX;drag.ly=e.clientY;if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>5)drag.moved=true;if(drag.moved&&lookOK()){canvas.style.cursor='grabbing';$('hover').hidden=true;const k=e.pointerType==='touch'?.006:.0042;yaw+=dx*k;pitch=Math.max(-1.3,Math.min(1.2,pitch+dy*k));persp.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'))}return}
+  if(drag.walk){const dx=e.clientX-drag.lx,dy=e.clientY-drag.ly;drag.lx=e.clientX;drag.ly=e.clientY;if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>5)drag.moved=true;if(drag.moved&&lookOK()){canvas.style.cursor='grabbing';$('hover').hidden=true;const k=2*Math.tan(persp.fov*Math.PI/360)/Math.max(1,canvas.clientHeight)*(INV.on?-1:1);yaw+=dx*k;pitch=Math.max(-1.3,Math.min(1.2,pitch+dy*k));persp.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'))}return}
   if(drag.pan){plan.cx=drag.cx-(e.clientX-drag.x)/plan.zoom;plan.cz=drag.cz-(e.clientY-drag.y)/plan.zoom;updateOrtho();return}
   if(drag.wall&&p){let x2=snap(p.x,.5),z2=snap(p.z,.5);if(Math.abs(x2-drag.x1)>Math.abs(z2-drag.z1)*2.5)z2=drag.z1;else if(Math.abs(z2-drag.z1)>Math.abs(x2-drag.x1)*2.5)x2=drag.x1;drag.x2=x2;drag.z2=z2;
     preview.geometry.setFromPoints([new THREE.Vector3(drag.x1,.05,drag.z1),new THREE.Vector3(x2,.05,z2)]);const L=Math.hypot(x2-drag.x1,z2-drag.z1)||.01;previewBox.scale.set(L,1,1);previewBox.position.set((drag.x1+x2)/2,H/2,(drag.z1+z2)/2);previewBox.rotation.y=-Math.atan2(z2-drag.z1,x2-drag.x1);return}
@@ -1537,7 +1543,7 @@ body:not([class*="lab-diegetic"]) .view .toast{top:64px}.view .toast{font:500 14
 body.holding .hint{opacity:0!important}
 .snd{font:500 14px "Hanken Grotesk",sans-serif;color:rgba(255,246,232,.9);background:none;border:0;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 14px rgba(0,0,0,.6)}.snd:hover{border:0;color:#fff}
 .snd .k,.playhud kbd{font:500 11px "IBM Plex Mono",monospace;border:1px solid rgba(239,228,212,.45);border-radius:3px;padding:0 4px;background:none;color:#efe4d4;text-transform:uppercase;text-shadow:none}
-.snd[aria-pressed=false] .on{color:rgba(255,246,232,.5)}`;document.head.appendChild(st)}
+.snd[aria-pressed=false] .on{color:rgba(255,246,232,.5)}.snd.inv[aria-pressed=true] .on{color:${ACC}}`;document.head.appendChild(st)}
 const ui=document.createElement('div');ui.className='ms ms-'+UI;document.body.appendChild(ui);window.__ms=ui;
 // all three: always on screen, no border, one click to switch between walking the room and the Classic page
 const switchMode=m=>{if(m==='classic')goClassic();else goRoom()};
